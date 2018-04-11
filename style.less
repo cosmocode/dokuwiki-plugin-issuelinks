@@ -1,0 +1,419 @@
+@import "css/chosen.less";
+
+[data-name='mmissues'] li span::after {
+    margin-left: 1em;
+    content: attr(data-status);
+    border: 1px solid;
+    border-radius: 4px;
+    padding-left: 2px;
+    padding-right: 2px;
+    color: darkgrey;
+    font-size: 85%
+}
+
+div#dokuwiki__header div.headings {
+    width: 40%;
+}
+
+div#dokuwiki__header div.tools {
+    width: 60%;
+}
+
+div.tools div#dokuwiki__usertools {
+    position: static;
+
+    ul {
+        margin-left: auto;
+        margin-right: 0;
+    }
+}
+
+div#dokuwiki__header {
+    padding-top: 0;
+}
+
+body {
+    .serverToolTip {
+        background-color: @ini_background;
+        color: @ini_text;
+        border: 1px solid @ini_border;
+        box-shadow: .1em .1em .1em @ini_border;
+        border-radius: 2px;
+        padding: .3em 60px .3em .5em;
+        font-size: .9rem;
+        min-height: 60px;
+        min-width: 15rem;
+        max-width: 30%;
+        z-index: 1000;
+
+        .waiting {
+            .magicmatcher-spinner();
+        }
+
+        h1.issueTitle {
+            font-size: 1rem;
+            font-weight: bold;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2 {
+            font-size: 0.95rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        @avatar_dimensions = 48px;
+        .assigneeAvatar {
+            width: @avatar_dimensions;
+            height: @avatar_dimensions;
+            position: absolute;
+            top: 0;
+            right: 0;
+            margin: .3em .3em 0 0;
+        }
+
+        .tagMixin {
+            padding-left: 1.3em;
+            margin-right: 0.3rem;
+            border-radius: 2px;
+            font-size: 12px;
+            font-weight: 600;
+
+            &:last-child {
+                margin-right: 0;
+            }
+        }
+
+        .components {
+            display: block;
+            margin-bottom: 0;
+
+            .component {
+                .tagMixin();
+                background: no-repeat url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAMAAAAolt3jAAAAaVBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAnbPKNAAAAInRSTlMAAQIDBgkMFSYqNzw9TVVidJGSlZumucPV2dri5vP3+fv9ItoNLgAAAFtJREFUCB2FwdsSQgAUQNGtSEnoKrpp//9HpjOa8dZajE5emOntmCnd8JNC4ZpFRvD98KslODkSnOxhCTi6DvrcHmxAzVkZ7qAmJIN9VnQVqCWVngnqjvrljf8+F+YJ/UXaassAAAAASUVORK5CYII=);
+            }
+        }
+
+        .labels {
+            display: block;
+            margin-bottom: 0;
+
+            .label {
+                .tagMixin();
+                background: no-repeat url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAAMFBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABaPxwLAAAAD3RSTlMAT1JXaGmAgoOFhoiV3uAEsLU1AAAAS0lEQVQIW2NggAKe//8MQDT/xfu/wbSA/P8NEP5/kADffyAACjCBaJBAPogRwMDADqIdgAL9////BOnk+P9/AdjI+b8hRrMEMMABAJ5fJWUitooIAAAAAElFTkSuQmCC);
+
+                &.color {
+                    padding: 2px 4px;
+                    background: none;
+                }
+            }
+        }
+        .descriptionTeaser {
+            white-space: pre-line;
+            font-size: 75%;
+            line-height: 130%;
+            display: block;
+            margin-top: 0.5rem;
+            margin-bottom: 1.4em;
+        }
+
+        .mergeRequests {
+            li {
+                line-height: 130%;
+
+                .mm__status {
+                    display: inline-block;
+                    margin-top: 5px;
+                }
+            }
+        }
+    }
+}
+
+.magicmatcher_struct_entry {
+    margin-bottom: .5rem;
+}
+
+.dokuwiki .struct_entry_form .magicmatcher_struct_entry {
+    width: 380px;
+}
+
+a.issuelink {
+    margin-right: 3px;
+    white-space: nowrap;
+
+    img {
+        vertical-align: sub;
+        margin-right: 2px;
+    }
+
+    span.summary {
+        white-space: normal;
+        overflow-wrap: break-word;
+        word-break: break-all;
+    }
+
+    &.mergerequest {
+        svg {
+            width: 16px;
+            vertical-align: sub;
+            margin-right: 2px;
+
+            path {
+                fill: #286DA8;
+            }
+        }
+    }
+}
+
+span.mm__status {
+    background-color: #FFF;
+    font-weight: bold;
+    border-radius: 5px;
+    border-style: solid;
+    border-width: 1px;
+    padding-left: 2px;
+    padding-right: 2px;
+    margin-left: 2px;
+    text-transform: uppercase;
+
+    &.closed,
+    &.resolved,
+    &.done {
+        color: #14892C;
+        border-color: #B2D8B9;
+    }
+
+    &.merged {
+        @mergedColor: #6f42c1;
+        color: @mergedColor;
+        border-color: lighten(@mergedColor, 20%);
+    }
+
+    &.open,
+    &.opened,
+    &.reopened,
+    &.to_do,
+    &.backlog {
+        color: #4A6785;
+        border-color: #E4E8ED;
+    }
+
+    &.in_progress {
+        color: #594300;
+        border-color: #FFE28C;
+    }
+}
+
+span.pulse {
+    animation: pulse 0.7s infinite linear;
+    transform-origin: 49% 48.5%;
+    font-weight: bold;
+    border-radius: 4px;
+    border: 1px solid;
+    padding: 2px;
+}
+
+@keyframes pulse {
+    from {
+        transform: scale(1) rotate(0deg);
+        color: black;
+    }
+
+    50% {
+        transform: scale(1.1) rotate(0deg);
+        color: red;
+    }
+
+    to {
+        transform: scale(1.2) rotate(0deg);
+        color: black;
+    }
+}
+
+#magicmatcher_adminimport {
+    .mm_success {
+        color: darkgreen;
+    }
+
+    .mm_error {
+        color: darkred;
+    }
+
+    .mm_info {
+        color: darkblue;
+    }
+
+    form {
+        display: block;
+        text-align: center;
+
+        fieldset {
+            width: 80%;
+            padding: 1em;
+
+            select {
+                width: 50%;
+            }
+        }
+
+        label {
+            text-align: left;
+            display: block;
+            margin-bottom: 0.5em;
+
+            &:hover {
+                background-color: @ini_background_alt;
+            }
+
+            > span {
+                display: inline-block;
+                width: 40%;
+            }
+        }
+
+        button {
+            margin: 1em;
+        }
+    }
+}
+
+#plugin__issuelinks_repoadmin {
+    fieldset {
+        margin-top: 1em;
+
+        select:disabled {
+            cursor: wait;
+        }
+    }
+
+    .org_repos {
+        border: 1px solid lightgrey;
+        border-radius: 8px;
+        padding: 1em;
+        margin: 1em;
+
+        ul {
+            margin-top: 0.5em;
+            padding-left: 0;
+            -moz-column-count: 2;
+            column-count: 2;
+
+            li {
+                list-style: none;
+
+                div.li {
+                    display: inline-block;
+                    width: 100%;
+                    border-bottom: 1px solid lightgrey;
+                }
+            }
+        }
+
+        span.mm_reponame {
+            order: 2;
+        }
+
+        span.repohookstatus {
+            margin-right: 1em;
+            padding: 5px 5px 5px 2em;
+            background: no-repeat center right/16px;
+            cursor: pointer;
+            order: 1;
+            align-self: center;
+            margin-top: 2px;
+            position: relative;
+
+            &:not(.forbidden)::before {
+                background: no-repeat center center;
+                content: "";
+                width: 1em;
+                height: 1.3em;
+                display: inline-block;
+                position: absolute;
+                left: 0;
+                bottom: 15%;
+            }
+
+            &.push::before {
+                background-image: url('images/repo-push.svg');
+                background-size: 12px;
+            }
+
+            &.issue::before {
+                background-image: url('images/issue-opened.svg');
+                background-size: 14px;
+            }
+
+            &.active {
+                background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAMAAADzapwJAAAAUVBMVEUAAAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgAAAgACPltrgAAAAGnRSTlMAAQQHCAkMDRMWJiorLk5PlZqeoKLFx/H3/Qa/diIAAABjSURBVBhXtcg5EgIhAADBAa/1Pldl/v9QA0oFlsyyw4Z/COfntrM3Tbvealo2e1XVFcA8NLsHODrG6R7UewTCpdhB1THWy+yRf1EtrPOnej/fbPnlfr/e97ebf7ownDad/c0L6ucNJ05wXNYAAAAASUVORK5CYII=);
+
+                &:hover {
+                    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAMAAADzapwJAAAAbFBMVEUAAACQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJBSsKKGAAAAI3RSTlMACAsODxARFBUWFywtLi8/VVhnaGlsbX5/hYaIw8Xo6evx8wp0fdQAAACXSURBVBhXZdBHFsJQDEPRRwodQieQSrT/PTL4304CHsl3pCMgrZscu1N7CyFtpX4Z9SKpNHW/StFryT2otIMmxn7JLUYdIOvM36YvgNx8pn8e9cddZz5RqJzXE324qh93uI868Zm6/6jU5cDZvmplfboFWK4mPYuwcFDf55MAT1fIWknDBoDSFbJWwzbm/dEUFkUyPn/3BbGiJKZWJWzoAAAAAElFTkSuQmCC');
+                }
+            }
+
+            &.inactive {
+                background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAMAAADzapwJAAAAbFBMVEUAAAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AACxLS5TAAAAI3RSTlMACAsODxARFBUWFywtLi8/VVhnaGlsbX5/hYaIw8Xo6evx8wp0fdQAAACXSURBVBhXZdBHFsJQDEPRRwodQieQSrT/PTL4304CHsl3pCMgrZscu1N7CyFtpX4Z9SKpNHW/StFryT2otIMmxn7JLUYdIOvM36YvgNx8pn8e9cddZz5RqJzXE324qh93uI868Zm6/6jU5cDZvmplfboFWK4mPYuwcFDf55MAT1fIWknDBoDSFbJWwzbm/dEUFkUyPn/3BbGiJKZWJWzoAAAAAElFTkSuQmCC');
+
+                &:hover {
+                    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAMAAADzapwJAAAAUVBMVEUAAACQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJDFg1FFAAAAGnRSTlMAAQQHCAkMDRMWJiorLk5PlZqeoKLFx/H3/Qa/diIAAABjSURBVBhXtcg5EgIhAADBAa/1Pldl/v9QA0oFlsyyw4Z/COfntrM3Tbvealo2e1XVFcA8NLsHODrG6R7UewTCpdhB1THWy+yRf1EtrPOnej/fbPnlfr/e97ebf7ownDad/c0L6ucNJ05wXNYAAAAASUVORK5CYII=);
+                }
+            }
+
+            &.forbidden {
+                background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAA/0lEQVQokW2Ru0oDYRCFz7prYhDvSlpBsBC0sYuFhZZWFj7H9wTBp7GxERGEsASDpEkhWGqxlYQNsqWFWByL/Jusi2eage/MhRkpiGNuMMaknBOpKloMAywjY3uOm+SYN05oEtHgiBHmm63ScIe5JZ4VJDxjzDuRJHYxY5IKHmDGvGBOJdHFXNZwzgqHmEdJvOJyIWKeMDmrEosYE4kvTCvgPmbCWrAbk0w7tCViUswn67NhocM15oqYXhVLHGBSSexhCnqYgo3K8QaYs2n6gDEFmxXcxWTh4CwxwWR0aEjE7NPH/LAz9y8zqv3ig7b+ig73AQ65YEH/iYik9mj9Au47qSueSXq0AAAAAElFTkSuQmCC);
+                cursor: not-allowed;
+            }
+
+            &.pulse,
+            &.pulse:hover {
+                background: none;
+                cursor: wait;
+                padding: 5px;
+
+                &::before {
+                    background: none;
+                }
+            }
+
+            &.error {
+                background-color: lightpink;
+                border: 2px solid darkred;
+                cursor: not-allowed;
+                display: block;
+            }
+        }
+
+        .issueImport {
+            border: none;
+            background: transparent;
+
+        }
+    }
+
+    .pulse {
+        .magicmatcher-spinner();
+    }
+}
+
+.magicmatcher-spinner {
+    display: inline-block;
+    animation: spinner 1s infinite linear;
+    cursor: wait;
+    background: none;
+    border: 3px dotted darkgray;
+    border-bottom-color: black;
+    border-radius: 100%;
+}
+
+@keyframes spinner {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(359deg);
+    }
+}
