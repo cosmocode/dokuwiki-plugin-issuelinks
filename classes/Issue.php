@@ -434,8 +434,7 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
             'priority' => $this->getPriority(),
             'duedate' => $this->getDuedate(),
             'versions' => $this->getVersions(),
-            'updated' => $this->getUpdated(),
-            'commentId' => $this->commentId
+            'updated' => $this->getUpdated()
         );
     }
 

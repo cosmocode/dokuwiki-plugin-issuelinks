@@ -9,7 +9,8 @@ use dokuwiki\plugin\issuelinks\classes\Issue;
 use dokuwiki\plugin\issuelinks\classes\Repository;
 use dokuwiki\plugin\issuelinks\classes\RequestResult;
 
-class GitHub extends AbstractService {
+class GitHub extends AbstractService
+{
 
 
     const SYNTAX = 'gh';
@@ -24,15 +25,18 @@ class GitHub extends AbstractService {
     protected $user = [];
     protected $total = null;
 
-    public static function getProjectIssueSeparator($isMergeRequest) {
+    public static function getProjectIssueSeparator($isMergeRequest)
+    {
         return '#';
     }
 
-    public static function getIssueURL($projectId, $issueId, $isMergeRequest) {
+    public static function getIssueURL($projectId, $issueId, $isMergeRequest)
+    {
         return 'https://github.com' . '/' . $projectId . '/issues/' . $issueId;
     }
 
-    public function parseIssueSyntax($issueSyntax) {
+    public function parseIssueSyntax($issueSyntax)
+    {
         list($projectKey, $issueId) = explode('#', $issueSyntax);
 
         // try to load as pull request
@@ -60,7 +64,7 @@ class GitHub extends AbstractService {
      */
     public function isConfigured()
     {
-        /** @var \helper_plugin_issuelinks_db $db*/
+        /** @var \helper_plugin_issuelinks_db $db */
         $db = plugin_load('helper', 'issuelinks_db');
         $authToken = $db->getKeyValue('github_token');
 
@@ -81,7 +85,7 @@ class GitHub extends AbstractService {
         $headers = $this->dokuHTTPClient->resp_headers;
         $missing_scopes = array_diff($this->scopes, explode(', ', $headers['x-oauth-scopes']));
         if (count($missing_scopes) !== 0) {
-            $this->configError ='Scopes "' . implode(', ', $missing_scopes) . '" are missing!';
+            $this->configError = 'Scopes "' . implode(', ', $missing_scopes) . '" are missing!';
             return false;
         }
         return true;
@@ -114,7 +118,8 @@ class GitHub extends AbstractService {
     /**
      * @inheritdoc
      */
-    public function getListOfAllReposAndHooks($organisation) {
+    public function getListOfAllReposAndHooks($organisation)
+    {
         $endpoint = "/orgs/$organisation/repos";
         try {
             $repos = $this->makeGitHubGETRequest($endpoint);
@@ -147,16 +152,8 @@ class GitHub extends AbstractService {
         return $projects;
     }
 
-
-    /**
-     * Delete our webhook in a source repository
-     *
-     * @param string $org the organisation/group where a repository is located
-     * @param string $repo the name of the repository
-     * @param int $hookid the numerical id of the hook to be deleted
-     * @return array
-     */
-    public function deleteWebhook($org, $repo, $hookid) {
+    public function deleteWebhook($org, $repo, $hookid)
+    {
         try {
             $data = $this->makeGitHubRequest("/repos/$org/$repo/hooks/$hookid", array(), 'DELETE');
             $status = $this->dokuHTTPClient->status;
@@ -172,19 +169,12 @@ class GitHub extends AbstractService {
         return array('data' => $data, 'status' => $status);
     }
 
-    /**
-     * Create a webhook at the repository
-     *
-     * @param string $org the organisation/group where a repository is located
-     * @param string $repo the name of the repository
-     * @param string $hookType whether it should create a hook for issue events or push events
-     * @return array
-     */
-    public function createWebhook ($org, $repo, $hookType) {
+    public function createWebhook($org, $repo)
+    {
         $secret = md5(openssl_random_pseudo_bytes(32));
         $config = array(
             "url" => self::GITHUB_WEBHOOK_URL,
-            "content_type" => "json",
+            "content_type" => 'json',
             "insecure_ssl" => 0,
             "secret" => $secret
         );
@@ -233,7 +223,7 @@ class GitHub extends AbstractService {
         }
 
 
-        return new RequestResult(200,'OK');
+        return new RequestResult(200, 'OK');
     }
 
     /**
@@ -241,11 +231,13 @@ class GitHub extends AbstractService {
      *
      * @param array $data
      *
+     * @return bool whether saving was successful
+     *
      * @throws \InvalidArgumentException
      * @throws HTTPRequestException
-     * @throws MissingConfigException
      */
-    public function saveIssue($data) {
+    protected function saveIssue($data)
+    {
 
         $issue = Issue::getInstance(
             'github',
@@ -268,11 +260,13 @@ class GitHub extends AbstractService {
      * Known issue:
      *   * We have to cycle through the webhooks/secrets stored for a given repo because the hookid is not in the request
      *
-     * @param string $body The unaltered payload of the request
+     * @param string $body    The unaltered payload of the request
      * @param string $repo_id the repo id (in the format of "organisation/repo-name")
+     *
      * @return bool wether the provided signature checks out against a stored one
      */
-    protected function isSignatureValid($body, $repo_id) {
+    protected function isSignatureValid($body, $repo_id)
+    {
         global $INPUT;
         if (!$INPUT->server->has('HTTP_X_HUB_SIGNATURE')) {
             return false;
@@ -294,9 +288,11 @@ class GitHub extends AbstractService {
      * See if this is a hook for issue events, that has been set by us
      *
      * @param array $hook the hook data coming from github
+     *
      * @return bool
      */
-    protected function isOurIssueHook($hook) {
+    protected function isOurIssueHook($hook)
+    {
         if ($hook['config']['url'] !== self::GITHUB_WEBHOOK_URL) {
             return false;
         }
@@ -313,14 +309,16 @@ class GitHub extends AbstractService {
             return false;
         }
 
-        if (count($hook['events']) !== 3 || array_diff($hook['events'], array('issues', 'issue_comment', 'pull_request'))) {
+        if (count($hook['events']) !== 3 || array_diff($hook['events'],
+                array('issues', 'issue_comment', 'pull_request'))) {
             return false;
         }
 
         return true;
     }
 
-    public function getListOfAllUserOrganisations() {
+    public function getListOfAllUserOrganisations()
+    {
         if ($this->orgs === null) {
             $endpoint = '/user/orgs';
             try {
@@ -331,7 +329,9 @@ class GitHub extends AbstractService {
             }
         }
         // fixme: add 'user repos'!
-        return array_map(function ($org) {return $org['login'];}, $this->orgs);
+        return array_map(function ($org) {
+            return $org['login'];
+        }, $this->orgs);
     }
 
     /**
@@ -339,14 +339,18 @@ class GitHub extends AbstractService {
      * todo: ensure correct headers are set: https://developer.github.com/v3/#current-version
      *
      * @param string   $endpoint the endpoint as defined in the GitHub documentation. With leading and trailing slashes
-     * @param int|null $max do not make more requests after this number of items have been retrieved
+     * @param int|null $max      do not make more requests after this number of items have been retrieved
+     *
      * @return array The decoded response-text
      * @throws HTTPRequestException
      */
-    public function makeGitHubGETRequest($endpoint, $max = null) {
+    protected function makeGitHubGETRequest($endpoint, $max = null)
+    {
         $results = array();
         $error = null;
         $waittime = 0;
+        /** @var \helper_plugin_issuelinks_util $utils */
+        $utils = plugin_load('helper', 'issuelinks_util');
         do {
             usleep($waittime);
             try {
@@ -366,20 +370,22 @@ class GitHub extends AbstractService {
 
 
             if ($this->dokuHTTPClient->resp_headers['x-ratelimit-remaining'] < 500) {
-                msg(sprintf($db->getLang('error:system too many requests'), dformat($this->dokuHTTPClient->resp_headers['x-ratelimit-reset'])),-1);
+                msg(sprintf($utils->getLang('error:system too many requests'),
+                    dformat($this->dokuHTTPClient->resp_headers['x-ratelimit-reset'])), -1);
                 break;
             }
 
             $results = array_merge($results, $data);
 
-            break;
-
+            if (empty($this->dokuHTTPClient->resp_headers['link'])) {
+                break;
+            }
             $links = $utils->parseHTTPLinkHeaders($this->dokuHTTPClient->resp_headers['link']);
             if (empty($links['next'])) {
                 break;
             }
             $endpoint = substr($links['next'], strlen($this->githubUrl));
-        } while (empty($max) || count($results) < $max) ;
+        } while (empty($max) || count($results) < $max);
         return $results;
     }
 
@@ -388,12 +394,14 @@ class GitHub extends AbstractService {
      * @param array  $data
      * @param string $method
      * @param array  $headers
+     *
      * @return mixed
      *
      * @throws HTTPRequestException|ExternalServerException
      */
-    public function makeGitHubRequest($endpoint, $data, $method, $headers = array()) {
-        /** @var \helper_plugin_issuelinks_db $db*/
+    protected function makeGitHubRequest($endpoint, $data, $method, $headers = array())
+    {
+        /** @var \helper_plugin_issuelinks_db $db */
         $db = plugin_load('helper', 'issuelinks_db');
         $authToken = $db->getKeyValue('github_token');
         $defaultHeaders = [
@@ -411,7 +419,7 @@ class GitHub extends AbstractService {
             throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
         }
 
-        if(!$success || $this->dokuHTTPClient->status < 200 || $this->dokuHTTPClient->status > 206) {
+        if (!$success || $this->dokuHTTPClient->status < 200 || $this->dokuHTTPClient->status > 206) {
             if ($this->dokuHTTPClient->status >= 500) {
                 throw new ExternalServerException('request error', $this->dokuHTTPClient, $url, $method);
             }
@@ -430,12 +438,12 @@ class GitHub extends AbstractService {
     {
         $repo = $issue->getProject();
         $issueNumber = $issue->getKey();
-        $endpoint = '/repos/'.$repo.'/issues/' . $issueNumber;
+        $endpoint = '/repos/' . $repo . '/issues/' . $issueNumber;
         $result = $this->makeGitHubGETRequest($endpoint);
         $this->setIssueData($issue, $result);
         if (isset($result['pull_request'])) {
             $issue->isMergeRequest(true);
-            $endpoint = '/repos/'.$repo.'/pulls/' . $issueNumber;
+            $endpoint = '/repos/' . $repo . '/pulls/' . $issueNumber;
             $result = $this->makeGitHubGETRequest($endpoint);
             $issue->setStatus($result['merged'] ? 'merged' : $result['state']);
             $mergeRequestText = $issue->getSummary() . ' ' . $issue->getDescription();
@@ -451,15 +459,17 @@ class GitHub extends AbstractService {
      * @see https://developer.github.com/v3/issues/#list-issues-for-a-repository
      *
      * @param string $projectKey The short-key of the project to be imported
-     * @param int $startat The offset from the last Element from which to start importing
+     * @param int    $startat    The offset from the last Element from which to start importing
+     *
      * @return array               The issues, suitable to be saved into the db
      * @throws HTTPRequestException
      *
      * // FIXME: set Header application/vnd.github.symmetra-preview+json ?
      */
-    public function retrieveAllIssues($projectKey, &$startat = 0) {
+    public function retrieveAllIssues($projectKey, &$startat = 0)
+    {
         $perPage = 30;
-        $page = ceil(($startat+1)/$perPage);
+        $page = ceil(($startat + 1) / $perPage);
         // FIXME: implent `since` parameter?
         $endpoint = "/repos/$projectKey/issues?state=all&page=$page";
         $issues = $this->makeGitHubGETRequest($endpoint);
@@ -473,7 +483,8 @@ class GitHub extends AbstractService {
         $retrievedIssues = array();
         foreach ($issues as $issueData) {
             try {
-                $issue = Issue::getInstance('github', $projectKey, $issueData['number'], !empty($issueData['pull_request']));
+                $issue = Issue::getInstance('github', $projectKey, $issueData['number'],
+                    !empty($issueData['pull_request']));
             } catch (\InvalidArgumentException $e) {
                 continue;
             }
@@ -490,17 +501,20 @@ class GitHub extends AbstractService {
      *
      * Currently only parses jira issues
      *
+     * @param string $currentProject
      * @param string $description
      *
      * @return array
      */
-    public function parseMergeRequestDescription($currentProject, $description) {
+    protected function parseMergeRequestDescription($currentProject, $description)
+    {
         $issues = array();
 
         $issueOwnRepoPattern = '/(?:\W|^)#([1-9]\d*)\b/';
         preg_match_all($issueOwnRepoPattern, $description, $githubMatches);
         foreach ($githubMatches[1] as $issueId) {
-            $issues[] = array('service' => 'github',
+            $issues[] = array(
+                'service' => 'github',
                 'project' => $currentProject,
                 'issueId' => $issueId,
             );
@@ -512,7 +526,8 @@ class GitHub extends AbstractService {
         preg_match_all($jiraPattern, $description, $jiraMatches);
         foreach ($jiraMatches[0] as $match) {
             list($project, $issueId) = explode('-', $match);
-            $issues[] = array('service' => 'jira',
+            $issues[] = array(
+                'service' => 'jira',
                 'project' => $project,
                 'issueId' => $issueId,
             );
@@ -524,7 +539,8 @@ class GitHub extends AbstractService {
     /**
      * @return mixed
      */
-    public function getTotal() {
+    public function getTotalIssuesBeingImported()
+    {
         return $this->total;
     }
 
@@ -536,7 +552,8 @@ class GitHub extends AbstractService {
      *
      * @return
      */
-    protected function estimateTotal($perPage, $default) {
+    protected function estimateTotal($perPage, $default)
+    {
         $headers = $this->dokuHTTPClient->resp_headers;
 
         if (empty($headers['link'])) {
@@ -546,7 +563,7 @@ class GitHub extends AbstractService {
         /** @var \helper_plugin_issuelinks_util $util */
         $util = plugin_load('helper', 'issuelinks_util');
         $links = $util->parseHTTPLinkHeaders($headers['link']);
-        preg_match('/page=(\d+)$/',$links['last'], $matches);
+        preg_match('/page=(\d+)$/', $links['last'], $matches);
         if (!empty($matches[1])) {
             return $matches[1] * $perPage;
         }
@@ -558,7 +575,8 @@ class GitHub extends AbstractService {
      * @param Issue $issue
      * @param array $info
      */
-    protected function setIssueData(Issue $issue, $info) {
+    protected function setIssueData(Issue $issue, $info)
+    {
         $issue->setSummary($info['title']);
         $issue->setDescription($info['body']);
         $labels = array();
@@ -591,13 +609,8 @@ class GitHub extends AbstractService {
         }
     }
 
-    /**
-     * Validate this issue
-     *
-     * @param Issue $issue
-     * @return bool
-     */
-    public static function isIssueValid(Issue $issue) {
+    public static function isIssueValid(Issue $issue)
+    {
         $summary = $issue->getSummary();
         $valid = !blank($summary);
         $status = $issue->getStatus();

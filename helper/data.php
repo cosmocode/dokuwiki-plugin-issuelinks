@@ -55,7 +55,7 @@ class helper_plugin_issuelinks_data extends DokuWiki_Plugin {
 
         while($issues = $service->retrieveAllIssues($projectKey, $startAt)) {
             if (!$total) {
-                $total = $service->getTotal();
+                $total = $service->getTotalIssuesBeingImported();
             }
 
             if (!$this->isImportLockedByMe($lockfileKey)) {

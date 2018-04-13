@@ -56,7 +56,7 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         }
 
         global $INPUT, $INFO;
-        if (false && !$INFO['isadmin']) { // FIXME
+        if (!auth_isadmin()) {
             $this->util->sendResponse(403, 'Must be Admin');
             return;
         }
@@ -73,8 +73,7 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         if ($INPUT->has('hookid')) {
             $response = $service->deleteWebhook($organisation, $repo, $INPUT->str('hookid'));
         } else {
-            $hookType = $INPUT->str('hooktype');
-            $response = $service->createWebhook($organisation, $repo, $hookType);
+            $response = $service->createWebhook($organisation, $repo);
         }
 
         // jira: https://developer.atlassian.com/cloud/jira/platform/webhooks/#registering-a-webhook-via-the-jira-rest-api
