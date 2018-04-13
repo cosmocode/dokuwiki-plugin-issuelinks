@@ -5,6 +5,7 @@ namespace dokuwiki\plugin\issuelinks\services;
 use dokuwiki\Form\Form;
 use dokuwiki\plugin\issuelinks\classes\Issue;
 use dokuwiki\plugin\issuelinks\classes\Repository;
+use dokuwiki\plugin\issuelinks\classes\RequestResult;
 
 interface ServiceInterface
 {
@@ -59,5 +60,23 @@ interface ServiceInterface
      * @return Repository[]
      */
     public function getListOfAllReposAndHooks($organisation);
+
+    /**
+     * Do all checks to verify that the webhook is expected and actually ours
+     *
+     * @param $webhookBody
+     *
+     * @return true|RequestResult true if the the webhook is our and should be processed RequestResult with explanation otherwise
+     */
+    public function validateWebhook($webhookBody);
+
+    /**
+     * Handle the contents of the webhooks body
+     *
+     * @param $webhookBody
+     *
+     * @return RequestResult
+     */
+    public function handleWebhook($webhookBody);
 
 }

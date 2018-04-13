@@ -7,6 +7,7 @@ use dokuwiki\plugin\issuelinks\classes\ExternalServerException;
 use dokuwiki\plugin\issuelinks\classes\HTTPRequestException;
 use dokuwiki\plugin\issuelinks\classes\Issue;
 use dokuwiki\plugin\issuelinks\classes\Repository;
+use dokuwiki\plugin\issuelinks\classes\RequestResult;
 
 class GitHub extends AbstractService {
 
@@ -208,39 +209,31 @@ class GitHub extends AbstractService {
         return array('data' => $data, 'status' => $status);
     }
 
-    public function handleWebhook($body)
+    public function validateWebhook($webhookBody)
     {
-        $data = json_decode($body, true);
-        dbglog($data, __FILE__ . ': ' . __LINE__);
-
-        if (!$this->isSignatureValid($body, $data['repository']['full_name'])) {
-            return [
-                'code' => 403,
-                'body' => 'Signature invalid or missing!',
-            ];
+        $data = json_decode($webhookBody, true);
+        if (!$this->isSignatureValid($webhookBody, $data['repository']['full_name'])) {
+            return new RequestResult(403, 'Signature invalid or missing!');
         }
+        return true;
+    }
+
+    public function handleWebhook($webhookBody)
+    {
         global $INPUT;
+        $data = json_decode($webhookBody, true);
         $event = $INPUT->server->str('HTTP_X_GITHUB_EVENT');
 
         if ($event === 'ping') {
-            return [
-                'code' => 202,
-                'body' => 'Webhook ping successful. Pings are not processed.',
-            ];
+            return new RequestResult(202, 'Webhook ping successful. Pings are not processed.');
         }
 
         if (!$this->saveIssue($data)) {
-            global $MSG;
-            return [
-                'code' => 500,
-                'body' => 'There was an error saving the issue.' . NL . implode(NL, $MSG),
-            ];
+            return new RequestResult(500, 'There was an error saving the issue.');
         }
 
-        return [
-            'code' => 200,
-            'body' => 'OK',
-        ];
+
+        return new RequestResult(200,'OK');
     }
 
     /**
