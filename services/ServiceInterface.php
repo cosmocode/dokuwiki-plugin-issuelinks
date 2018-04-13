@@ -9,6 +9,7 @@ use dokuwiki\plugin\issuelinks\classes\RequestResult;
 
 interface ServiceInterface
 {
+    const WEBHOOK_URL = DOKU_URL . 'lib/plugins/issuelinks/webhook.php';
 
     /**
      * Get the singleton instance of the Services
@@ -26,7 +27,7 @@ interface ServiceInterface
      *
      * @return string
      */
-    public static function getIssueURL($projectId, $issueId, $isMergeRequest);
+    public function getIssueURL($projectId, $issueId, $isMergeRequest);
 
     /**
      * Decide whether the provided issue is valid
@@ -116,6 +117,10 @@ interface ServiceInterface
      * @return array
      */
     public function deleteWebhook($organisation, $repo, $hookid);
+
+
+
+    public static function isOurWebhook();
 
     /**
      * Do all checks to verify that the webhook is expected and actually ours

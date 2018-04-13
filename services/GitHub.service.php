@@ -18,8 +18,6 @@ class GitHub extends AbstractService
     const ID = 'github';
     const WEBHOOK_UA = 'GitHub-Hookshot/';
 
-    const GITHUB_WEBHOOK_URL = DOKU_URL . 'lib/plugins/issuelinks/webhook.php';
-
     private $scopes = array('admin:repo_hook', 'read:org', 'public_repo');
     protected $configError = '';
     protected $user = [];
@@ -30,7 +28,7 @@ class GitHub extends AbstractService
         return '#';
     }
 
-    public static function getIssueURL($projectId, $issueId, $isMergeRequest)
+    public function getIssueURL($projectId, $issueId, $isMergeRequest)
     {
         return 'https://github.com' . '/' . $projectId . '/issues/' . $issueId;
     }
@@ -95,7 +93,7 @@ class GitHub extends AbstractService
     {
         $scopes = implode(', ', $this->scopes);
         $configForm->addHTML('<p>' . $this->configError . ' Please go to <a href="https://github.com/settings/tokens">https://github.com/settings/tokens/</a> and generate a new token for this plugin with the scopes ' . $scopes . '</p>');
-        $configForm->addTextInput('githubToken', 'GitHub AccessToken');
+        $configForm->addTextInput('githubToken', 'GitHub AccessToken')->useInput(false);
     }
 
     public function handleAuthorization()
@@ -173,7 +171,7 @@ class GitHub extends AbstractService
     {
         $secret = md5(openssl_random_pseudo_bytes(32));
         $config = array(
-            "url" => self::GITHUB_WEBHOOK_URL,
+            "url" => self::WEBHOOK_URL,
             "content_type" => 'json',
             "insecure_ssl" => 0,
             "secret" => $secret
@@ -197,6 +195,13 @@ class GitHub extends AbstractService
         }
 
         return array('data' => $data, 'status' => $status);
+    }
+
+    public static function isOurWebhook()
+    {
+        global $INPUT;
+        $userAgent = $INPUT->server->str('HTTP_USER_AGENT');
+        return strpos($userAgent, self::WEBHOOK_UA) === 0;
     }
 
     public function validateWebhook($webhookBody)
@@ -293,7 +298,7 @@ class GitHub extends AbstractService
      */
     protected function isOurIssueHook($hook)
     {
-        if ($hook['config']['url'] !== self::GITHUB_WEBHOOK_URL) {
+        if ($hook['config']['url'] !== self::WEBHOOK_URL) {
             return false;
         }
 
@@ -499,7 +504,7 @@ class GitHub extends AbstractService
     /**
      * Parse a string for issue-ids
      *
-     * Currently only parses jira issues
+     * Currently only parses issues for the same repo and jira issues
      *
      * @param string $currentProject
      * @param string $description
@@ -597,12 +602,14 @@ class GitHub extends AbstractService
                     default:
                 }
             }
-            $issue->setLabelData($label['name'], $label['color']);
+            $issue->setLabelData($label['name'], '#' . $label['color']);
         }
         $issue->setType($type ? $type : 'unknown');
         $issue->setStatus(isset($info['merged']) ? 'merged' : $info['state']);
         $issue->setUpdated($info['updated_at']);
-//        $issue->setVersions($info['milestone']); // FIXME - must be strings!
+        if (!empty($info['milestone'])) {
+            $issue->setVersions([$info['milestone']['title']]);
+        }
         $issue->setLabels($labels);
         if ($info['assignee']) {
             $issue->setAssignee($info['assignee']['login'], $info['assignee']['avatar_url']);

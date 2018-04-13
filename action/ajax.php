@@ -109,7 +109,11 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
 
         $serviceId = $INPUT->str('servicename');
         $organisation = $INPUT->str('org');
-        $html = $this->createOrgRepoHTML($serviceId, $organisation);
+        try {
+            $html = $this->createOrgRepoHTML($serviceId, $organisation);
+        } catch (\Throwable $e) {
+            $this->util->sendResponse($e->getCode(), $e->getMessage());
+        }
         $this->util->sendResponse(200, $html);
     }
 

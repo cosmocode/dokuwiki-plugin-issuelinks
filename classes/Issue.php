@@ -506,8 +506,8 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
      */
     public function getIssueURL() {
         $serviceProvider = ServiceProvider::getInstance();
-        $service = $serviceProvider->getServices()[$this->serviceID];
-        return $service::getIssueURL($this->projectId, $this->issueId, $this->isMergeRequest);
+        $service = $serviceProvider->getServices()[$this->serviceID]::getInstance();
+        return $service->getIssueURL($this->projectId, $this->issueId, $this->isMergeRequest);
     }
 
     public function setAssignee($name, $avatar_url) {
@@ -622,7 +622,7 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
      */
     public function setLabelData($labelName, $color) {
         $this->labelData[$labelName] = array(
-            'background-color' => "#$color",
+            'background-color' => $color,
             'color' => $this->calculateColor($color)
         );
     }

@@ -76,6 +76,7 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
             }
 
             $this->orgs[$serviceID] = $service->getListOfAllUserOrganisations();
+            sort($this->orgs[$serviceID]);
         }
     }
 
