@@ -121,7 +121,7 @@ jQuery(function initializeRepoAdminInterface() {
         $reposDiv.html(jQuery('<span>').addClass('pulse').css('padding', '5px'));
         $this.prop('disabled', 'disabled');
     });
-    var CHECK_IMPORT_STATUS_TIMEOUT = 500;
+    var CHECK_IMPORT_STATUS_TIMEOUT = 1000;
     var checkImportStatusTimeoutID;
     function checkImportStatus(servicename, project, $importStatusElement) {
         var checkImportSettings = {
@@ -138,22 +138,23 @@ jQuery(function initializeRepoAdminInterface() {
                 var data = response.data;
                 window.magicMatcherUtil.showAjaxMessages(response);
 
-
-
                 var total = '?';
-                var percent;
+                var percent = '?';
                 var count = jQuery.isNumeric(data.count) ? data.count : 0;
                 if (jQuery.isNumeric(data.total) && data.total > 0) {
                     total = data.total;
                     percent = count/total*100;
                 }
-                var progressText = '' + count + '/' + total + ' (' + percent + ' %)';
-
+                var statusText = LANG.plugins.issuelinks['status:' + data.status];
+                var progressText = '' + count + '/' + total + ' (' + percent + ' %) ' + statusText;
+                $importStatusElement
+                    .text(progressText)
+                    .css('background-color','#ff9')
+                    .animate({backgroundColor: 'transparent'}, CHECK_IMPORT_STATUS_TIMEOUT/2)
+                ;
                 if (data.status && data.status === 'done') {
-                    $importStatusElement.text(progressText + ' Done!');
                     return;
                 }
-                $importStatusElement.text(progressText);
                 checkImportStatusTimeoutID = window.setTimeout(
                     checkImportStatus,
                     CHECK_IMPORT_STATUS_TIMEOUT,

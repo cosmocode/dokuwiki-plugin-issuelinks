@@ -465,7 +465,7 @@ class GitHub extends AbstractService {
      * // FIXME: set Header application/vnd.github.symmetra-preview+json ?
      */
     public function retrieveAllIssues($projectKey, &$startat = 0) {
-        $perPage = 20;
+        $perPage = 30;
         $page = ceil(($startat+1)/$perPage);
         // FIXME: implent `since` parameter?
         $endpoint = "/repos/$projectKey/issues?state=all&page=$page";

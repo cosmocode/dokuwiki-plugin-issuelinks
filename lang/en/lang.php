@@ -119,5 +119,8 @@ $lang['upstream issue: no pages edited'] = 'Currently no [documentation](%s) cha
 $lang['upstream issue: auto update'] = "This comment has been created by a bot and will be automatically updated. See [www.sprintdoc.de](https://www.sprintdoc.de) for more information.";
 
 $lang['js']['btn:savewithissue'] = $lang['btn:Save with Issue'];
+$lang['js']['status:started'] = 'Started...';
+$lang['js']['status:running'] = 'Running...';
+$lang['js']['status:done'] = 'Done!';
 
 //Setup VIM: ex: et ts=4 :

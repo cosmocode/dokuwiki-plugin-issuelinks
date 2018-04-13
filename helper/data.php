@@ -35,11 +35,11 @@ class helper_plugin_issuelinks_data extends DokuWiki_Plugin {
      */
     public function importAllIssues($serviceName, $projectKey) {
         $lockfileKey = $this->getImportLockID($serviceName, $projectKey);
-//        if ($this->isImportLocked($lockfileKey)) {
-//            throw new RuntimeException('Import of Issues is already locked!');
-//        }
+        if ($this->isImportLocked($lockfileKey)) {
+            throw new RuntimeException('Import of Issues is already locked!');
+        }
         dbglog('start import. $lockfileKey: ' . $lockfileKey);
-        $this->lockImport($lockfileKey, json_encode(['user' => $_SERVER['REMOTE_USER']]));
+        $this->lockImport($lockfileKey, json_encode(['user' => $_SERVER['REMOTE_USER'], 'status' => 'started']));
 
         $serviceProvider = ServiceProvider::getInstance();
         $services = $serviceProvider->getServices();
@@ -67,6 +67,7 @@ class helper_plugin_issuelinks_data extends DokuWiki_Plugin {
                 'user' => $_SERVER['REMOTE_USER'],
                 'total' => $total,
                 'count' => $counter,
+                'status' => 'running',
             ]));
         }
         $this->unlockImport($lockfileKey);
@@ -165,6 +166,7 @@ class helper_plugin_issuelinks_data extends DokuWiki_Plugin {
         $lockFN = $conf['lockdir'].'/'.md5('_' . $id).'.lock';
         $lockData = json_decode(io_readFile($lockFN), true);
         $lockData['status'] = 'done';
+        $lockData['total'] = $lockData['count'];
         io_saveFile($lockFN, json_encode($lockData));
     }
 

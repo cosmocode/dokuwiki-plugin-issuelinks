@@ -181,11 +181,6 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         ob_end_flush();
         ob_end_flush();
         flush();
-        dbglog(ob_list_handlers(), __FILE__ . ': ' . __LINE__);
-        dbglog(ob_get_status(), __FILE__ . ': ' . __LINE__);
-        dbglog(ob_get_level(), __FILE__ . ': ' . __LINE__);
-
-//        sleep(10);
 
         /** @var helper_plugin_issuelinks_data $data */
         $data = plugin_load('helper', 'issuelinks_data');
