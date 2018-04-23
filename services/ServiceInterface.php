@@ -100,23 +100,21 @@ interface ServiceInterface
     /**
      * Create a webhook at the repository
      *
-     * @param string $organisation the organisation/group where a repository is located
-     * @param string $repo         the name of the repository
+     * @param string $project full name of the project
      *
      * @return array
      */
-    public function createWebhook($organisation, $repo);
+    public function createWebhook($project);
 
     /**
      * Delete our webhook in a source repository
      *
-     * @param string $organisation the organisation/group where a repository is located
-     * @param string $repo         the name of the repository
-     * @param int    $hookid       the numerical id of the hook to be deleted
+     * @param string $project full name of the project
+     * @param int    $hookid  the numerical id of the hook to be deleted
      *
      * @return array
      */
-    public function deleteWebhook($organisation, $repo, $hookid);
+    public function deleteWebhook($project, $hookid);
 
 
 

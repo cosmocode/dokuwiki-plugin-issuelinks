@@ -67,13 +67,12 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         $services = $serviceProvider->getServices();
         $service = $services[$serviceId]::getInstance();
 
-        $organisation = $INPUT->str('org');
-        $repo = $INPUT->str('repo');
+        $project = $INPUT->str('project');
 
         if ($INPUT->has('hookid')) {
-            $response = $service->deleteWebhook($organisation, $repo, $INPUT->str('hookid'));
+            $response = $service->deleteWebhook($project, $INPUT->str('hookid'));
         } else {
-            $response = $service->createWebhook($organisation, $repo);
+            $response = $service->createWebhook($project);
         }
 
         // jira: https://developer.atlassian.com/cloud/jira/platform/webhooks/#registering-a-webhook-via-the-jira-rest-api
@@ -140,15 +139,15 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
             } elseif (!empty($repo->error)) {
                 continue;
             }
-            $reponame = $repo->displayName;
+            $repoDisplayName = $repo->displayName;
             $project = $repo->full_name;
             $issueHookID = empty($repo->hookID) ? '' : "data-id='$repo->hookID'";
             $issueHookTitle = $repo->error === 403 ? 'The associated account has insufficient rights for this action' : 'Toggle the hook for issue-events';
             $html .= "<li><div class='li'>";
-            $html .= "<span title='$issueHookTitle' data-org='$org' data-repo='$reponame' $issueHookID class='repohookstatus $stateIssue issue'></span>";
+            $html .= "<span title='$issueHookTitle' data-project='$project' $issueHookID class='repohookstatus $stateIssue issue'></span>";
             $importSVG = inlineSVG(__DIR__ . '/../images/import.svg');
             $html .= "<button title='Import all issues of this repository' data-project='$project' class='issueImport js-importIssues'>$importSVG</button>";
-            $html .= "<span class='mm_reponame'>$reponame</span>";
+            $html .= "<span class='mm_reponame'>$repoDisplayName</span>";
             $html .= '</div></li>';
         }
         $html .= '</ul></div></div>';

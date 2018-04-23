@@ -58,8 +58,7 @@ jQuery(function initializeRepoAdminInterface() {
             data: {
                 call: 'issuelinks_repo_admin_toggle',
                 sectok: jQuery('input[name="sectok"]').val(),
-                org: $this.data('org'),
-                repo: $this.data('repo'),
+                project: $this.data('project'),
                 hookid: $this.data('id'),
                 hooktype: 'issue',
                 servicename: servicename,

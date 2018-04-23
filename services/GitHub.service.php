@@ -150,15 +150,15 @@ class GitHub extends AbstractService
         return $projects;
     }
 
-    public function deleteWebhook($org, $repo, $hookid)
+    public function deleteWebhook($project, $hookid)
     {
         try {
-            $data = $this->makeGitHubRequest("/repos/$org/$repo/hooks/$hookid", array(), 'DELETE');
+            $data = $this->makeGitHubRequest("/repos/$project/hooks/$hookid", array(), 'DELETE');
             $status = $this->dokuHTTPClient->status;
 
             /** @var \helper_plugin_issuelinks_db $db */
             $db = plugin_load('helper', 'issuelinks_db');
-            $db->deleteWebhook('github', "$org/$repo", $hookid);
+            $db->deleteWebhook('github', $project, $hookid);
         } catch (HTTPRequestException $e) {
             $data = $e->getMessage();
             $status = $e->getCode();
@@ -167,7 +167,7 @@ class GitHub extends AbstractService
         return array('data' => $data, 'status' => $status);
     }
 
-    public function createWebhook($org, $repo)
+    public function createWebhook($project)
     {
         $secret = md5(openssl_random_pseudo_bytes(32));
         $config = array(
@@ -183,12 +183,12 @@ class GitHub extends AbstractService
             'events' => ['issues', 'issue_comment', 'pull_request'],
         );
         try {
-            $data = $this->makeGitHubRequest("/repos/$org/$repo/hooks", $data, 'POST');
+            $data = $this->makeGitHubRequest("/repos/$project/hooks", $data, 'POST');
             $status = $this->dokuHTTPClient->status;
             $id = $data['id'];
             /** @var \helper_plugin_issuelinks_db $db */
             $db = plugin_load('helper', 'issuelinks_db');
-            $db->saveWebhook('github', "$org/$repo", $id, $secret);
+            $db->saveWebhook('github', $project, $id, $secret);
         } catch (HTTPRequestException $e) {
             $data = $e->getMessage();
             $status = $e->getCode();

@@ -154,15 +154,7 @@ class GitLab extends AbstractService
         return $repositories;
     }
 
-    /**
-     * Create a webhook at the repository
-     *
-     * @param string $organisation the organisation/group where a repository is located
-     * @param string $repo         the name of the repository
-     *
-     * @return array
-     */
-    public function createWebhook($organisation, $repo)
+    public function createWebhook($project)
     {
         $secret = md5(openssl_random_pseudo_bytes(32));
         $data = array(
@@ -175,11 +167,12 @@ class GitLab extends AbstractService
         );
 
         try {
-            $data = $this->makeGitLabRequest("/projects/{$organisation}%2F{$repo}/hooks", $data, 'POST');
+            $encProject = urlencode($project);
+            $data = $this->makeGitLabRequest("/projects/$encProject/hooks", $data, 'POST');
             $status = $this->dokuHTTPClient->status;
             /** @var \helper_plugin_issuelinks_db $db */
             $db = plugin_load('helper', 'issuelinks_db');
-            $db->saveWebhook('gitlab', "{$organisation}/{$repo}", $data['id'], $secret);
+            $db->saveWebhook('gitlab', $project, $data['id'], $secret);
         } catch (HTTPRequestException $e) {
             $data = $e->getMessage();
             $status = $e->getCode();
@@ -188,24 +181,16 @@ class GitLab extends AbstractService
         return array('data' => $data, 'status' => $status);
     }
 
-    /**
-     * Delete our webhook in a source repository
-     *
-     * @param string $organisation the organisation/group where a repository is located
-     * @param string $repo         the name of the repository
-     * @param int    $hookid       the numerical id of the hook to be deleted
-     *
-     * @return array
-     */
-    public function deleteWebhook($organisation, $repo, $hookid)
+    public function deleteWebhook($project, $hookid)
     {
         /** @var \helper_plugin_issuelinks_db $db */
         $db = plugin_load('helper', 'issuelinks_db');
-        $endpoint = "/projects/$organisation%2F$repo/hooks/$hookid";
+        $encProject = urlencode($project);
+        $endpoint = "/projects/$encProject/hooks/$hookid";
         try {
             $data = $this->makeGitLabRequest($endpoint, array(), 'DELETE');
             $status = $this->dokuHTTPClient->status;
-            $db->deleteWebhook('gitlab', "$organisation/$repo", $hookid);
+            $db->deleteWebhook('gitlab', $project, $hookid);
         } catch (HTTPRequestException $e) {
             $data = $e->getMessage();
             $status = $e->getCode();
