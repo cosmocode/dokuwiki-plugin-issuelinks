@@ -194,21 +194,6 @@ class GitLab extends AbstractService
         } catch (HTTPRequestException $e) {
             $data = $e->getMessage();
             $status = $e->getCode();
-
-            if ($status === -100) {
-                /**
-                 * There is a Bug in /mnt/home/michael/IdeaProjects/dokuwiki/inc/HTTPClient.php
-                 * that causes this request to time out. However the webhook is still deleted and we should delete it
-                 * from our DB.
-                 *
-                 * See SPR-985
-                 *
-                 * See https://github.com/splitbrain/dokuwiki/issues/2308
-                 * See https://github.com/splitbrain/dokuwiki/pull/2309
-                 *
-                 */
-                $db->deleteWebhook('gitlab', "$organisation/$repo", $hookid);
-            }
         }
 
         return array('data' => $data, 'status' => $status);
