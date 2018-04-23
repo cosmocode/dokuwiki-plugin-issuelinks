@@ -133,6 +133,7 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
 
         if (in_array($serviceID, $this->configNeeded)) {
             $configForm = new \dokuwiki\Form\Form();
+            $configForm->addClass('plugin__repoadmin_serviceConfig');
             $configForm->setHiddenField('authorize', $serviceID);
             $configForm->addFieldsetOpen();
             $service->hydrateConfigForm($configForm);
