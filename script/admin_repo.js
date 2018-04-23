@@ -142,7 +142,7 @@ jQuery(function initializeRepoAdminInterface() {
                 var count = jQuery.isNumeric(data.count) ? data.count : 0;
                 if (jQuery.isNumeric(data.total) && data.total > 0) {
                     total = data.total;
-                    percent = count/total*100;
+                    percent = Math.round(count/total*100);
                 }
                 var statusText = LANG.plugins.issuelinks['status:' + data.status];
                 var progressText = '' + count + '/' + total + ' (' + percent + ' %) ' + statusText;
