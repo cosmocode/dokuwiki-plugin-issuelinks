@@ -41,6 +41,7 @@ class webhook_plugin_issuelinks extends DokuWiki_Plugin
         if ($handlingService === null) {
             dbglog('webhook could not be indentified', __FILE__ . ': ' . __LINE__);
             dbglog('user agent: ' . $userAgent);
+            dbglog(json_decode($body, true));
             $util->sendResponse(400, 'unknown webhook');
             return;
         }

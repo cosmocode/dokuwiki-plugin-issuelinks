@@ -53,22 +53,43 @@ class helper_plugin_issuelinks_data extends DokuWiki_Plugin {
         $counter = 0;
         $startAt = 0;
 
-        while($issues = $service->retrieveAllIssues($projectKey, $startAt)) {
-            if (!$total) {
-                $total = $service->getTotalIssuesBeingImported();
-            }
+        try {
+            while ($issues = $service->retrieveAllIssues($projectKey, $startAt)) {
+                if (!$total) {
+                    $total = $service->getTotalIssuesBeingImported();
+                }
 
-            if (!$this->isImportLockedByMe($lockfileKey)) {
-                throw new RuntimeException('Import of Issues aborted because lock removed');
-            }
+                if ($counter > $total) {
+                    break;
+                }
 
-            $counter += count($issues);
-            $this->lockImport($lockfileKey, json_encode([
-                'user' => $_SERVER['REMOTE_USER'],
-                'total' => $total,
-                'count' => $counter,
-                'status' => 'running',
-            ]));
+                if (!$this->isImportLockedByMe($lockfileKey)) {
+                    throw new RuntimeException('Import of Issues aborted because lock removed');
+                }
+
+                $counter += count($issues);
+                $this->lockImport($lockfileKey, json_encode([
+                    'user' => $_SERVER['REMOTE_USER'],
+                    'total' => $total,
+                    'count' => $counter,
+                    'status' => 'running',
+                ]));
+
+
+            }
+        } catch (\Throwable $e) {
+            dbglog("Downloading all issues from $serviceName fpr project $projectKey failed ",
+                __FILE__ . ': ' . __LINE__);
+            if (is_a($e, \dokuwiki\plugin\issuelinks\classes\HTTPRequestException::class)) {
+                /** @var \dokuwiki\plugin\issuelinks\classes\HTTPRequestException $e */
+                dbglog($e->getUrl());
+                dbglog($e->getHttpError());
+                dbglog($e->getMessage());
+                dbglog($e->getCode());
+                dbglog($e->getResponseBody());
+            }
+            $this->lockImport($lockfileKey, json_encode(['status' => 'failed']));
+            throw $e;
         }
         $this->unlockImport($lockfileKey);
     }
