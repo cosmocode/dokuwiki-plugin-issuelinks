@@ -407,7 +407,7 @@ class Jira extends AbstractService
      */
     public function validateWebhook($webhookBody)
     {
-        $data = json_decode($webhookBody);
+        $data = json_decode($webhookBody, true);
         /** @var \helper_plugin_issuelinks_db $db */
         $db = plugin_load('helper', 'issuelinks_db');
         $webhooks = $db->getWebhooks('jira');
@@ -439,7 +439,14 @@ class Jira extends AbstractService
      */
     public function handleWebhook($webhookBody)
     {
-        // TODO: Implement handleWebhook() method.
+        $data = json_decode($webhookBody, true);
+        $issueData = $data['issue'];
+        list($projectKey, $issueId) = explode('-', $issueData['key']);
+        $issue =Issue::getInstance('jira', $projectKey, $issueId, false);
+        $this->setIssueData($issue, $issueData);
+        $issue->saveToDB();
+
+        return new RequestResult(200, 'OK');
     }
 
     protected function setIssueData(Issue $issue, $issueData)
@@ -468,7 +475,6 @@ class Jira extends AbstractService
 
         // FIXME: check and handle these fields:
 //        $issue->setParent($issueData['fields']['parent']['key']);
-
     }
 
     protected function makeJiraRequest($endpoint, array $data, $method, array $headers = array()) {
@@ -494,7 +500,6 @@ class Jira extends AbstractService
             throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
         }
         return json_decode($this->dokuHTTPClient->resp_body, true);
-
     }
 
 }
