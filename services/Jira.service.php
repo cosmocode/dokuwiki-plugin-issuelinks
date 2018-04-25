@@ -448,6 +448,7 @@ class Jira extends AbstractService
         $issue->setStatus($issueData['fields']['status']['name']);
         $issue->setDescription($issueData['fields']['description']);
         $issue->setType($issueData['fields']['issuetype']['name']);
+        $issue->setPriority($issueData['fields']['priority']['name']);
 
         $issue->setUpdated($issueData['fields']['updated']);
         $versions = array_column($issueData['fields']['fixVersions'], 'name');
@@ -461,10 +462,12 @@ class Jira extends AbstractService
             $issue->setAssignee($assignee['displayName'], $assignee['avatarUrls']['48x48']);
         }
 
+        if ($issueData['fields']['duedate']) {
+            $issue->setDuedate($issueData['fields']['duedate']);
+        }
+
         // FIXME: check and handle these fields:
-//        $issue->setPriority($info['fields']['priority']['name']);
-//        $issue->setDuedate($info['fields']['duedate']);
-//        $issue->setParent($info['fields']['parent']['key']);
+//        $issue->setParent($issueData['fields']['parent']['key']);
 
     }
 
