@@ -267,9 +267,9 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         } catch (Exception $e) {
             return array(400, $e->getMessage());
         }
-//        if (!$issue->isValid()) {
-//            return array(404, '');
-//        }
+        if (!$issue->isValid()) {
+            return array(404, '');
+        }
 
         return array(200, $issue->buildTooltipHTML());
     }
@@ -280,9 +280,9 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         } catch (Exception $e) {
             return array(400, $e->getMessage());
         }
-//        if (!$issue->isValid()) {
-//            return array(404, '');
-//        }
+        if (!$issue->isValid()) {
+            return array(404, '');
+        }
 
         return array(200, $issue->getAdditionalDataHTML());
     }
