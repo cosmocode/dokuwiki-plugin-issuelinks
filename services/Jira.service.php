@@ -208,12 +208,9 @@ class Jira extends AbstractService
 
     public function retrieveAllIssues($projectKey, &$startat = 0)
     {
-//        $jql = 'project=' . $projectKey
-//            . '&startAt=' . $startat;
         $jqlQuery = "project=$projectKey";
-//        $jqlQuery = urlencode("project=$projectKey");
 //        $jqlQuery = urlencode("project=$projectKey ORDER BY updated DESC");
-        $endpoint = '/rest/api/2/search?jql=' . $jqlQuery. '&startAt=' . $startat;
+        $endpoint = '/rest/api/2/search?jql=' . $jqlQuery. '&maxResults=50&startAt=' . $startat;
         $result = $this->makeJiraRequest($endpoint, [], 'GET');
 
         if (empty($result['issues'])) {
@@ -236,11 +233,6 @@ class Jira extends AbstractService
             $issue->saveToDB();
             $retrievedIssues[] = $issue;
         }
-        /** @var Issue $lastIssue */
-        $lastIssue = end($retrievedIssues);
-        dbglog($lastIssue->getProject() . ' ' . $lastIssue->getKey() . ': ' . $lastIssue->getSummary());
-        dbglog($endpoint, __FILE__ . ': ' . __LINE__);
-        dbglog($result['startAt'], __FILE__ . ': ' . __LINE__);
         return $retrievedIssues;
     }
 
@@ -477,7 +469,7 @@ class Jira extends AbstractService
     }
 
     protected function makeJiraRequest($endpoint, array $data, $method, array $headers = array()) {
-        $url = $this->jiraUrl . strtolower($endpoint);
+        $url = $this->jiraUrl . $endpoint;
         $dataToBeSend = json_encode($data);
         $defaultHeaders = [
             'Authorization' => 'Basic ' . base64_encode("$this->authUser:$this->token"),
@@ -487,8 +479,7 @@ class Jira extends AbstractService
         $this->dokuHTTPClient->headers = array_merge($this->dokuHTTPClient->headers, $defaultHeaders, $headers);
 
         try {
-//            $responseSuccess = $this->dokuHTTPClient->sendRequest($url, $dataToBeSend, $method);
-            $responseSuccess = $this->dokuHTTPClient->get($url);
+            $responseSuccess = $this->dokuHTTPClient->sendRequest($url, $dataToBeSend, $method);
         } catch (\HTTPClientException $e) {
             throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
         }
