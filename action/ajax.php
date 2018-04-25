@@ -6,17 +6,21 @@
  * @author  Michael Große <dokuwiki@cosmocode.de>
  */
 
-if (!defined('DOKU_INC')) die();
+if (!defined('DOKU_INC')) {
+    die();
+}
 
 use dokuwiki\plugin\issuelinks\classes\Issue;
 use dokuwiki\plugin\issuelinks\classes\ServiceProvider;
 
-class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
+class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
+{
 
     /** @var helper_plugin_issuelinks_util util */
     public $util;
 
-    public function __construct() {
+    public function __construct()
+    {
         /** @var helper_plugin_issuelinks_util util */
         $this->util = plugin_load('helper', 'issuelinks_util');
     }
@@ -25,9 +29,11 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
      * Registers a callback function for a given event
      *
      * @param Doku_Event_Handler $controller DokuWiki's event controller object
+     *
      * @return void
      */
-    public function register(Doku_Event_Handler $controller) {
+    public function register(Doku_Event_Handler $controller)
+    {
         $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'handle_ajax');
         $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'repo_admin_toggle');
         $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'repo_admin_org');
@@ -37,13 +43,14 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
     /**
      * Create/Delete the webhook of a repository
      *
-     * @param Doku_Event $event event object by reference
-     * @param mixed $param [the parameters passed as fifth argument to register_hook() when this
+     * @param Doku_Event $event  event object by reference
+     * @param mixed      $param  [the parameters passed as fifth argument to register_hook() when this
      *                           handler was registered]
      *
      * @return void
      */
-    public function repo_admin_toggle(Doku_Event $event, $param) {
+    public function repo_admin_toggle(Doku_Event $event, $param)
+    {
         if ($event->data !== 'issuelinks_repo_admin_toggle') {
             return;
         }
@@ -83,12 +90,14 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
     /**
      * Get the repos of an organisation and create HTML from them and return it to the request
      *
-     * @param Doku_Event $event event object by reference
-     * @param mixed $param [the parameters passed as fifth argument to register_hook() when this
+     * @param Doku_Event $event  event object by reference
+     * @param mixed      $param  [the parameters passed as fifth argument to register_hook() when this
      *                           handler was registered]
+     *
      * @return void
      */
-    public function repo_admin_org(Doku_Event $event, $param) {
+    public function repo_admin_org(Doku_Event $event, $param)
+    {
         if ($event->data !== 'issuelinks_repo_admin_getorg') {
             return;
         }
@@ -120,9 +129,11 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
      * Create the HTML of the repositories of an organisation/group of a service.
      *
      * @param string $org the organisation from which to request the repositories
+     *
      * @return string
      */
-    public function createOrgRepoHTML($serviceId, $org) {
+    public function createOrgRepoHTML($serviceId, $org)
+    {
         $serviceProvider = ServiceProvider::getInstance();
         $services = $serviceProvider->getServices();
         $service = $services[$serviceId]::getInstance();
@@ -131,7 +142,9 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         $html = '<div class="org_repos">';
         $html .= '<p>Below are the repositories of the organisation to which the authorized user has access to. Click on the icon to create/delete the webhook.</p>';
         $html .= '<div><ul>';
-        usort($repos, function ($repo1, $repo2) {return $repo1->displayName < $repo2->displayName ? -1 : 1;});
+        usort($repos, function ($repo1, $repo2) {
+            return $repo1->displayName < $repo2->displayName ? -1 : 1;
+        });
         foreach ($repos as $repo) {
             $stateIssue = empty($repo->hookID) ? 'inactive' : 'active';
             if ($repo->error === 403) {
@@ -154,7 +167,8 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         return $html;
     }
 
-    public function asyncImportAllIssues(Doku_Event $event, $param) {
+    public function asyncImportAllIssues(Doku_Event $event, $param)
+    {
         if ($event->data !== 'issuelinks_import_all_issues_async') {
             return;
         }
@@ -175,11 +189,11 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
 
 
         ignore_user_abort('true');
-        set_time_limit(60*20);
+        set_time_limit(60 * 20);
         ob_start();
         $this->util->sendResponse(202, 'Importing  issues...');
         header('Connection: close');
-        header('Content-Length: '.ob_get_length());
+        header('Content-Length: ' . ob_get_length());
         ob_end_flush();
         ob_end_flush();
         flush();
@@ -193,13 +207,17 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
     /**
      * Pass Ajax call to a type
      *
-     * @param Doku_Event $event event object by reference
-     * @param mixed $param [the parameters passed as fifth argument to register_hook() when this
+     * @param Doku_Event $event  event object by reference
+     * @param mixed      $param  [the parameters passed as fifth argument to register_hook() when this
      *                           handler was registered]
+     *
      * @return void
      */
-    public function handle_ajax(Doku_Event $event, $param) {
-        if ($event->data !== 'plugin_issuelinks') return;
+    public function handle_ajax(Doku_Event $event, $param)
+    {
+        if ($event->data !== 'plugin_issuelinks') {
+            return;
+        }
         $event->preventDefault();
         $event->stopPropagation();
 
@@ -224,7 +242,8 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
                 list($code, $data) = $this->getIssueTooltipHTML($serviceName, $projectKey, $issueId, $isMergeRequest);
                 break;
             case 'getAdditionalIssueData':
-                list($code, $data) = $this->getAdditionalIssueData($serviceName, $projectKey, $issueId, $isMergeRequest);
+                list($code, $data) = $this->getAdditionalIssueData($serviceName, $projectKey, $issueId,
+                    $isMergeRequest);
                 break;
             default:
                 $code = 400;
@@ -233,7 +252,8 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         $this->util->sendResponse($code, $data);
     }
 
-    protected function checkImportStatus($serviceName, $projectKey) {
+    protected function checkImportStatus($serviceName, $projectKey)
+    {
         if (!auth_isadmin()) {
             return [403, 'Must be Admin'];
         }
@@ -243,7 +263,7 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         $lockID = $data->getImportLockID($serviceName, $projectKey);
         $lockData = $data->getLockContent($lockID);
         if ($lockData === false) {
-            msg('Import not locked ' . $lockID,2);
+            msg('Import not locked ' . $lockID, 2);
             return [200, ['status' => 'done']];
         }
         if (!empty($lockData['status']) && $lockData['status'] === 'done') {
@@ -260,7 +280,8 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
      *
      * @return array
      */
-    private function getIssueTooltipHTML($pmServiceName, $projectKey, $issueId, $isMergeRequest) {
+    private function getIssueTooltipHTML($pmServiceName, $projectKey, $issueId, $isMergeRequest)
+    {
         try {
             $issue = Issue::getInstance($pmServiceName, $projectKey, $issueId, $isMergeRequest);
             $issue->getFromDB();
@@ -274,7 +295,8 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         return array(200, $issue->buildTooltipHTML());
     }
 
-    private function getAdditionalIssueData($pmServiceName, $projectKey, $issueId, $isMergeRequest) {
+    private function getAdditionalIssueData($pmServiceName, $projectKey, $issueId, $isMergeRequest)
+    {
         try {
             $issue = Issue::getInstance($pmServiceName, $projectKey, $issueId, $isMergeRequest);
         } catch (Exception $e) {
