@@ -174,7 +174,7 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         }
 
 
-        ignore_user_abort(true);
+        ignore_user_abort('true');
         set_time_limit(60*20);
         ob_start();
         $this->util->sendResponse(202, 'Importing  issues...');
