@@ -209,11 +209,6 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         }
 
         global $INPUT;
-        $sectok = $INPUT->str('sectok'); // fixme check for admin!?
-//        if (!checkSecurityToken($sectok)) { // FIXME
-//            $this->util->sendResponse(403, 'Security-Token invalid!');
-//            return;
-//        }
 
         $action = $INPUT->str('issuelinks-action');
         $serviceName = $INPUT->str('issuelinks-service');
@@ -221,39 +216,9 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         $issueId = $INPUT->str('issuelinks-issueid');
         $isMergeRequest = $INPUT->bool('issuelinks-ismergerequest');
 
-        // FIXME remove duplicate merge-request detection
-//        if ($issueId[0] === '!') {
-//            $isMergeRequest = true;
-//            $issueId = substr($issueId, 1);
-//        }
-        $page = $INPUT->str('issuelinks-page');
         switch ($action) {
             case 'checkImportStatus':
                 list($code, $data) = $this->checkImportStatus($serviceName, $projectKey);
-                break;
-            case 'abortIssueImport':
-                list($code, $data) = $this->abortIssueImport();
-                break;
-            case 'abortCommitImport':
-                list($code, $data) = $this->abortCommitImport();
-                break;
-            case 'getProjectIssues':
-                list($code, $data) = $this->getProjectIssues($serviceName, $projectKey);
-                break;
-            case 'relatedIssueScoreDetails':
-                list($code, $data) = $this->getRelatedIssueScoreDetails($serviceName, $projectKey, $issueId, $isMergeRequest);
-                break;
-            case 'updateIssue':
-                list($code, $data) = $this->updateIssueSession($serviceName, $projectKey, $issueId, $isMergeRequest, $page);
-                break;
-            case 'getSuggestions':
-                list($code, $data) = $this->getSuggestionsPage($page);
-                break;
-            case 'addIssue':
-                list($code, $data) = $this->addIssue($serviceName, $projectKey, $issueId, $isMergeRequest, $page);
-                break;
-            case 'removeIssue':
-                list($code, $data) = $this->removeIssue($serviceName, $projectKey, $issueId, $isMergeRequest, $page);
                 break;
             case 'issueToolTip':
                 list($code, $data) = $this->getIssueTooltipHTML($serviceName, $projectKey, $issueId, $isMergeRequest);
@@ -286,138 +251,6 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin {
         }
 
         return [200, $lockData];
-    }
-
-    protected function abortIssueImport() {
-        if (!auth_ismanager()) {
-            return array(403,'');
-        }
-        /** @var helper_plugin_magicmatcher_data $data */
-        $data = plugin_load('helper', 'magicmatcher_data');
-        @$data->unlockImport('jiraimport');
-        $data->lockImport('issueImportAborted');
-        global $INPUT, $conf;
-        if ($conf['allowdebug']) {
-            $user = $INPUT->server->str('REMOTE_USER') . ' (' . clientIP() . ')';
-            dbglog("Abort received by $user!");
-        }
-        return array(200, array());
-    }
-
-    protected function abortCommitImport() {
-        if (!auth_ismanager()) {
-            return array(403,'');
-        }
-        /** @var helper_plugin_magicmatcher_data $data */
-        $data = plugin_load('helper', 'magicmatcher_data');
-        @$data->unlockImport('commitImport');
-        $data->lockImport('commitImportAborted');
-        global $INPUT, $conf;
-        if ($conf['allowdebug']) {
-            $user = $INPUT->server->str('REMOTE_USER') . ' (' . clientIP() . ')';
-            dbglog("Abort received by $user!");
-        }
-        return array(200, array());
-    }
-
-    protected function removeIssue($pmServiceName, $projectKey, $issueId, $isMergeRequest, $page) {
-        if (auth_quickaclcheck($page) < AUTH_EDIT) {
-            return array(403, 'You do not have the rights to edit this page!');
-        }
-        /** @var helper_plugin_magicmatcher_db $db_helper */
-        $db_helper = $this->loadHelper('magicmatcher_db');
-        $db_helper->deleteAllIssuePageRevisions($page, $pmServiceName, $projectKey, $issueId, $isMergeRequest, 'context');
-        return array(200, '');
-    }
-
-    protected function addIssue($pmServiceName, $projectKey, $issueId, $isMergeRequest, $page) {
-        if (auth_quickaclcheck($page) < AUTH_EDIT) {
-            return array(403, 'You do not have the rights to edit this page!');
-        }
-
-        /** @var helper_plugin_magicmatcher_db $db_helper */
-        $db_helper = $this->loadHelper('magicmatcher_db');
-        $db_helper->savePageRevIssues($page, 0, $pmServiceName, $projectKey, $issueId, $isMergeRequest, 'context');
-
-        /** @var syntax_plugin_magicmatcher_issuelist $issuelist */
-        $issuelist = plugin_load('syntax', 'magicmatcher_issuelist');
-        return array(200, array('issueListItems' => $issuelist->getIssueListItems($page)));
-    }
-
-    protected function getProjectIssues($pmServiceName, $projectKey) {
-        /** @var helper_plugin_magicmatcher_data $data */
-        $data = plugin_load('helper', 'magicmatcher_data');
-        $issues = $data->assembleProjectIssueOptions($pmServiceName, $projectKey);
-        $options = '<option></option>';
-        foreach ($issues as $issueNumber => $issue_option) {
-            if (empty($issue_option)) {
-                continue;
-            }
-            $option = "<option value='$issueNumber'";
-            $option .= " data-project='{$issue_option['attrs']['data-project']}'";
-            $option .= " data-status='{$issue_option['attrs']['data-status']}'";
-            $option .= '>';
-            $option .= $issue_option['label'];
-            $option .= '</option>';
-            $options.= $option;
-        }
-        return array(200, array('issue_options' => $options));
-    }
-
-    protected function getRelatedIssueScoreDetails($pmServiceName, $projectKey, $issueId, $isMergeRequest) {
-        global $INPUT;
-        /** @var helper_plugin_magicmatcher_db $db_helper */
-        $db_helper = $this->loadHelper('magicmatcher_db');
-        $originalIssue = Issue::getInstance($pmServiceName, $projectKey, $issueId, $isMergeRequest);
-        $relatedService = $INPUT->str('relatedService');
-        $relatedProject = $INPUT->str('relatedProject');
-        $relatedIssueID = $INPUT->str('relatedIssueID');
-        $relatedIssue = Issue::getInstance($relatedService, $relatedProject, $relatedIssueID, $isMergeRequest);
-        $sharedFiles = $db_helper->getSharedFiles($originalIssue, $relatedIssue);
-        $html = '<ul>';
-        foreach ($sharedFiles as $file) {
-            $html .= "<li>$file[sharedWeight] - $file[rmService] - $file[repository] - $file[path]</li>";
-        }
-        $html .= '</ul>';
-        return array(200, $html);
-    }
-
-    protected function updateIssueSession($pmServiceName, $projectKey, $issueId, $isMergeRequest, $page) {
-        session_start();
-        if (empty($issueId)) {
-            $this->util->unsetMMSession();
-            /** @var syntax_plugin_magicmatcher_issuelist $issuelist */
-            $issuelist = plugin_load('syntax', 'magicmatcher_issuelist');
-            $issueListItems = $issuelist->getIssueListItems($page);
-            return array(200, array('issue' => '', 'issueListItems' => $issueListItems));
-        }
-
-
-        /** @var helper_plugin_magicmatcher_data $data_helper */
-        $data_helper = $this->loadHelper('magicmatcher_data');
-        $issue = $data_helper->getIssue($pmServiceName, $projectKey, $issueId, $isMergeRequest);
-        $status = 200;
-        if (!$issue->isValid()) {
-            $this->util->unsetMMSession();
-            $status = 404;
-        } else {
-            $_SESSION['MAGICMATCHER_PMSERVICE'] = $pmServiceName;
-            $_SESSION['MAGICMATCHER_PROJECT'] = $projectKey;
-            $_SESSION['MAGICMATCHER_ISSUE'] = $issueId;
-            $_SESSION['MAGICMATCHER_ISMERGEREQUEST'] = $isMergeRequest;
-        }
-
-        /** @var syntax_plugin_magicmatcher_issuelist $issuelist */
-        $issuelist = plugin_load('syntax', 'magicmatcher_issuelist');
-        $issueListItems = $issuelist->getIssueListItems($page);
-
-        return array($status, array('issue' => $issue, 'issueListItems' => $issueListItems));
-    }
-
-    protected function getSuggestionsPage($page) {
-        /** @var action_plugin_magicmatcher_suggestion $suggestions */
-        $suggestions = plugin_load('action', 'magicmatcher_suggestion');
-        return array(200, $suggestions->getSuggestionsPage($page));
     }
 
     /**
