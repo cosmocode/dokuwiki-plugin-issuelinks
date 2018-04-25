@@ -124,6 +124,23 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
         $this->deleteEntity('webhooks', $entity);
     }
 
+    public function getWebhooks($service, $repo = null, $id = null)
+    {
+        $sql = 'SELECT * FROM webhooks WHERE service = ?';
+        $params = [$service];
+        if ($repo) {
+            $sql .= ' AND repository_id = ?';
+            $params[] = $repo;
+        }
+        if ($id) {
+            $sql .= ' AND id = ?';
+            $params[] = $id;
+        }
+
+        $webhooks = $this->sqlArrayQuery($sql, $params);
+        return $webhooks;
+    }
+
 
     /**
      * Save an issue into the database
