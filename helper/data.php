@@ -175,7 +175,7 @@ class helper_plugin_issuelinks_data extends DokuWiki_Plugin
     }
 
     /**
-     * Removes the lock created with @see \helper_plugin_magicmatcher_data::checkImportLock
+     * Marks the import as unlocked / done
      *
      * @param $id
      */
@@ -207,38 +207,6 @@ class helper_plugin_issuelinks_data extends DokuWiki_Plugin
     }
 
     /**
-     * Assemble the issues of a project such that they can be given to a @see \dokuwiki\Form\DropdownElement
-     *
-     * @param string $pmServiceName
-     * @param string $projectid
-     *
-     * @return array the array of options
-     */
-    public function assembleProjectIssueOptions($pmServiceName, $projectid)
-    {
-        $options = [''];
-        if (!$pmServiceName || !$projectid) {
-            return $options;
-        }
-        /** @var helper_plugin_magicmatcher_db $dbHelper */
-        $dbHelper = $this->loadHelper('magicmatcher_db');
-        $issues = $dbHelper->getProjectIssues($pmServiceName, $projectid);
-
-        foreach ($issues as $issue) {
-            $mrPrefix = $issue['is_mergerequest'] ? '!' : '';
-            $options[$mrPrefix . $issue['id']] = [
-                'label' => PMServiceBuilder::getProjectIssueSeparator($pmServiceName,
-                        $issue['is_mergerequest']) . $issue['id'] . ': ' . $issue['summary'],
-                'attrs' => [
-                    'data-project' => $issue['project'],
-                    'data-status' => strtolower($issue['status']),
-                ],
-            ];
-        }
-        return $options;
-    }
-
-    /**
      * Get an issue either from local DB or attempt to import it
      *
      * @param string $pmServiceName The name of the project management service
@@ -261,53 +229,6 @@ class helper_plugin_issuelinks_data extends DokuWiki_Plugin
         }
         return $issue;
     }
-
-    /**
-     * Parse the keys to issues from a gitcommit-Message
-     *
-     * @param string $rmServiceName The repository management service from which we are handling the commits
-     * @param string $repoId        The name of the repo
-     * @param string $message       The git commit-message
-     *
-     * @return array
-     */
-    public function parseIssueKeysFromText($rmServiceName, $repoId, $message)
-    {
-        $issues = [];
-
-        $jiraMatches = [];
-        $jiraPattern = '/[A-Z0-9]+-[1-9]\d*/';
-        preg_match_all($jiraPattern, $message, $jiraMatches);
-        foreach ($jiraMatches[0] as $match) {
-            list($project, $issueId) = explode('-', $match);
-            $issues[] = [
-                'pmService' => 'jira',
-                'project' => $project,
-                'issueId' => $issueId,
-            ];
-        }
-
-        $repoMatches = [];
-        $repoPattern = '/(\w+\/)?([\w\.\-_]+)?([#!])(\d+)(?:[\.,\s]|$)/';
-        preg_match_all($repoPattern, $message, $repoMatches, PREG_SET_ORDER);
-        list($currentNamespace, $currentRepo) = explode('/', $repoId);
-        foreach ($repoMatches as $match) {
-            if ($rmServiceName !== 'gitlab' && $match[3] === '!') {
-                continue; // only gitlab has `!` has separator
-            }
-            $namespace = empty($match[1]) ? $currentNamespace : trim($match[1], '/');
-            $repo = empty($match[2]) ? $currentRepo : $match[2];
-            $issues[] = [
-                'pmService' => $rmServiceName,
-                'project' => "$namespace/$repo",
-                'issueId' => $match[4],
-                'isMergeRequest' => $match[3] === '!',
-            ];
-        }
-
-        return $issues;
-    }
-
 
     public function getMergeRequestsForIssue($serviceName, $projectKey, $issueId, $isMergeRequest)
     {
@@ -342,11 +263,6 @@ class helper_plugin_issuelinks_data extends DokuWiki_Plugin
         $pages = $this->db->getAllPageLinkingToIssue($pmServiceName, $projectKey, $issueId, $isMergeRequest);
         $pages = $this->db->removeOldLinks($pmServiceName, $projectKey, $issueId, $isMergeRequest, $pages);
 
-        if (false && plugin_load('helper', 'struct_db')) { // FIXME
-            $structPages = $this->getLinkingPageFromStruct($pmServiceName, $projectKey, $issueId, $isMergeRequest);
-            $pages = array_merge($pages, $structPages);
-        }
-
         if (empty($pages)) {
             return [];
         }
@@ -354,76 +270,6 @@ class helper_plugin_issuelinks_data extends DokuWiki_Plugin
         $pages = $this->keepNewest($pages);
         $pages = $this->filterPagesForACL($pages);
         $pages = $this->addUserToPages($pages);
-        return $pages;
-    }
-
-    protected function getLinkingPageFromStruct($pmServiceName, $projectKey, $issueId, $isMergeRequest)
-    {
-        $sep = PMServiceBuilder::getProjectIssueSeparator($pmServiceName, $isMergeRequest);
-        $sep = $sep === '#' ? '\#' : $sep;
-        if ($pmServiceName === 'github') {
-            $pmServiceName = 'gh';
-        }
-        if ($pmServiceName === 'gitlab') {
-            $pmServiceName = 'gl';
-        }
-        $issueSyntax = "[[$pmServiceName>$projectKey$sep$issueId]]";
-        /** @var helper_plugin_sqlite $sqlite */
-        $sqlite = plugin_load('helper', 'sqlite');
-        $sqlColumns = '
-            SELECT tbl, label, MAX(ts) as ts
-            FROM schemas
-            JOIN (
-                SELECT sid, label
-                FROM schema_cols
-                JOIN (
-                    SELECT id, label
-                    FROM types
-                    WHERE class=\'Issue\'
-                )
-                ON tid=id
-                WHERE enabled = 1
-            )
-            ON id=sid
-            WHERE islookup = 0
-            GROUP BY tbl, label;';
-        $sqlite->init('struct', DOKU_PLUGIN . 'struct/db/');
-        $res = $sqlite->query($sqlColumns);
-        $columns = $sqlite->res2arr($res);
-        $sqlite->res_close($res);
-
-        $sqlTables = 'SELECT tbl, MAX(ts) AS ts FROM schemas GROUP BY tbl;';
-        $res = $sqlite->query($sqlTables);
-        $tables = array_reduce($sqlite->res2arr($res), function ($carry, $element) {
-            $carry[$element['tbl']] = $element['ts'];
-            return $carry;
-        }, []);
-        $sqlite->res_close($res);
-
-        $configLines = [
-            'cols: %pageid%',
-        ];
-        $schemas = [];
-        foreach ($columns as $column) {
-            if ($tables[$column['tbl']] !== $column['ts']) {
-                continue;
-            }
-            $schemas[] = $column['tbl'];
-            $configLines[] = "filteror: $column[tbl].$column[label]=$issueSyntax";
-        }
-
-        if (empty($schemas)) {
-            return [];
-        }
-        $schemas = array_unique($schemas);
-        array_unshift($configLines, 'schema: ' . implode(', ', $schemas));
-
-        $config = new dokuwiki\plugin\struct\meta\ConfigParser($configLines);
-        $search = new dokuwiki\plugin\struct\meta\SearchConfig($config->getConfig());
-        $results = $search->execute();
-        $pages = array_map(function ($result) {
-            return ['page' => $result[0]->getRawValue(), 'rev' => 0];
-        }, $results);
         return $pages;
     }
 
