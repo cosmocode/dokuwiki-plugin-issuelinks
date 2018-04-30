@@ -483,42 +483,28 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
     }
 
     /**
-     * FIXME: replace all with SVG
+     * ToDo: replace all with SVG
      *
      * @return string the path to the icon / base64 image if type unknown
      */
     protected function getMaterialDesignTypeIcon()
     {
-        $fileName = DOKU_URL . '/lib/plugins/issuelinks/images/';
-        switch (cleanID($this->type)) {
-            case 'bug':
-                $fileName .= 'mdi-bug.png';
-                break;
-            case 'story':
-                $fileName .= 'mdi-bookmark.png';
-                break;
-            case 'epic':
-                $fileName .= 'mdi-flash.png';
-                break;
-            case 'change_request':
-                $fileName .= 'mdi-plus.png';
-                break;
-            case 'improvement':
-                $fileName .= 'mdi-arrow-up-thick.png';
-                break;
-            case 'organisation_task':
-                $fileName .= 'mdi-calendar-text.png';
-                break;
-            case 'technical_task':
-                $fileName .= 'mdi-source-branch.png';
-                break;
-            case 'task':
-                $fileName .= 'mdi-check.png';
-                break;
-            default:
-                $fileName = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAABDUlEQVQYGQXBLWuVcQDA0fM8272OIYLCmi+IOBBWhWEZohiHn0AQi/H3CQxaLVptgmmIacUwWLthsDiQBaOmIaYF+XsOgHb61N9Glx30qAkAtOigVbttttZGO31t1VUArXfeCwCg3S66Buhzr6Blb/rVeS+b6WEnTehuZ0206Gej0Wh0CH3pCXrXM2ijVW+bW3bS6Bbd6xiddQNogpadNrpDa40mXbYBQI+7bPS9CRotdN51gOZGo9dN0Nxo1vv2AFpr1RFAtztBD1oBtOhffwD62D7osH2gZaN/QNv9aAZd6XdPgZYtoPtdtAWgzY771nbrNHezD523BQCa2uuo0Wh02vNmAADQ1KIZAPgPQZt8UVJ7VXIAAAAASUVORK5CYII=';
+        $typeIcon = [
+            'bug' => 'mdi-bug.png',
+            'story' => 'mdi-bookmark.png',
+            'epic' => 'mdi-flash.png',
+            'change_request' => 'mdi-plus.png',
+            'improvement' => 'mdi-arrow-up-thick.png',
+            'organisation_task' => 'mdi-calendar-text.png',
+            'technical_task' => 'mdi-source-branch.png',
+            'task' => 'mdi-check.png',
+        ];
+
+        if (!isset($typeIcon[cleanID($this->type)])) {
+            return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAABDUlEQVQYGQXBLWuVcQDA0fM8272OIYLCmi+IOBBWhWEZohiHn0AQi/H3CQxaLVptgmmIacUwWLthsDiQBaOmIaYF+XsOgHb61N9Glx30qAkAtOigVbttttZGO31t1VUArXfeCwCg3S66Buhzr6Blb/rVeS+b6WEnTehuZ0206Gej0Wh0CH3pCXrXM2ijVW+bW3bS6Bbd6xiddQNogpadNrpDa40mXbYBQI+7bPS9CRotdN51gOZGo9dN0Nxo1vv2AFpr1RFAtztBD1oBtOhffwD62D7osH2gZaN/QNv9aAZd6XdPgZYtoPtdtAWgzY771nbrNHezD523BQCa2uuo0Wh02vNmAADQ1KIZAPgPQZt8UVJ7VXIAAAAASUVORK5CYII=';
         }
-        return $fileName;
+
+        return DOKU_URL . '/lib/plugins/issuelinks/images/' . $typeIcon[cleanID($this->type)];
     }
 
     public function setAssignee($name, $avatar_url)
