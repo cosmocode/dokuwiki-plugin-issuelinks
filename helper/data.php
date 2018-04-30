@@ -124,9 +124,9 @@ class helper_plugin_issuelinks_data extends DokuWiki_Plugin
             return false;
         }
 
-        clearstatcache($lockFN);
-        if ((time() - filemtime($lockFN)) > 120) { // todo: decide if we want this to be configurable?
-            @unlink($lockFN);
+        clearstatcache(true, $lockFN);
+        if ((time() - filemtime($lockFN)) > 120) {
+            unlink($lockFN);
             dbglog('issuelinks: stale lock timeout');
             return false;
         }
