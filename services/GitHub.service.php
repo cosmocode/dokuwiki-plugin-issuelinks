@@ -185,24 +185,12 @@ class GitHub extends AbstractService
             'Content-Type' => 'application/json',
         ];
 
+        $requestHeaders = array_merge($defaultHeaders, $headers);
+
         // todo ensure correct slashes everywhere
         $url = $this->githubUrl . $endpoint;
-        $this->dokuHTTPClient->headers = array_merge($this->dokuHTTPClient->headers ?: [], $defaultHeaders, $headers);
-        $dataToBeSend = json_encode($data);
-        try {
-            $success = $this->dokuHTTPClient->sendRequest($url, $dataToBeSend, $method);
-        } catch (\HTTPClientException $e) {
-            throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
-        }
 
-        if (!$success || $this->dokuHTTPClient->status < 200 || $this->dokuHTTPClient->status > 206) {
-            if ($this->dokuHTTPClient->status >= 500) {
-                throw new ExternalServerException('request error', $this->dokuHTTPClient, $url, $method);
-            }
-            throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
-        }
-        $response = json_decode($this->dokuHTTPClient->resp_body, true);
-        return $response;
+        return $this->makeHTTPRequest($this->dokuHTTPClient, $url, $requestHeaders, $data, $method);
     }
 
     public function hydrateConfigForm(Form $configForm)

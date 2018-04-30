@@ -148,27 +148,14 @@ class Jira extends AbstractService
     protected function makeJiraRequest($endpoint, array $data, $method, array $headers = [])
     {
         $url = $this->jiraUrl . $endpoint;
-        $dataToBeSend = json_encode($data);
         $defaultHeaders = [
             'Authorization' => 'Basic ' . base64_encode("$this->authUser:$this->token"),
             'Content-Type' => 'application/json',
         ];
 
-        $this->dokuHTTPClient->headers = array_merge($this->dokuHTTPClient->headers, $defaultHeaders, $headers);
+        $requestHeaders = array_merge($defaultHeaders, $headers);
 
-        try {
-            $responseSuccess = $this->dokuHTTPClient->sendRequest($url, $dataToBeSend, $method);
-        } catch (\HTTPClientException $e) {
-            throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
-        }
-
-        if (!$responseSuccess || $this->dokuHTTPClient->status < 200 || $this->dokuHTTPClient->status > 206) {
-            if ($this->dokuHTTPClient->status >= 500) {
-                throw new ExternalServerException('request error', $this->dokuHTTPClient, $url, $method);
-            }
-            throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
-        }
-        return json_decode($this->dokuHTTPClient->resp_body, true);
+        return $this->makeHTTPRequest($this->dokuHTTPClient, $url, $requestHeaders, $data, $method);
     }
 
     /**
