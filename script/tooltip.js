@@ -88,3 +88,44 @@ window.addTooltip = function addTooltip(selectorOr$element, url, dataOrDataFunct
         selectorOr$element.hover(hoverStart, hoverEnd);
     }
 };
+
+
+jQuery(function initializeTooltips() {
+    'use strict';
+
+    function getLinkData($issueLink) {
+        return {
+            'issuelinks-service': $issueLink.data('service'),
+            'issuelinks-project': $issueLink.data('project'),
+            'issuelinks-issueid': $issueLink.data('issueid'),
+            'issuelinks-ismergerequest': $issueLink.data('ismergerequest'),
+            call: 'plugin_issuelinks',
+            'issuelinks-action': 'issueToolTip',
+            sectok: jQuery('input[name=sectok]').val(),
+        };
+    }
+
+    window.addTooltip('.issuelink', undefined, getLinkData, function getAdditionalIssueData($issueLink, $tooltip) {
+        jQuery.get(window.DOKU_BASE + 'lib/exe/ajax.php', {
+            'issuelinks-service': $issueLink.data('service'),
+            'issuelinks-project': $issueLink.data('project'),
+            'issuelinks-issueid': $issueLink.data('issueid'),
+            'issuelinks-ismergerequest': $issueLink.data('ismergerequest'),
+            call: 'plugin_issuelinks',
+            'issuelinks-action': 'getAdditionalIssueData',
+            sectok: jQuery('input[name=sectok]').val(),
+        }).done(function updateIssueTooltip(response) {
+            var data = response.data;
+            window.magicMatcherUtil.showAjaxMessages(response);
+            $tooltip.find('.waiting').removeClass('waiting');
+            if (typeof data.avatarHTML === 'string') {
+                $tooltip.find('.assigneeAvatar').html(data.avatarHTML);
+            }
+            if (typeof data.fancyLabelsHTML === 'string') {
+                $tooltip.find('.labels').html(data.fancyLabelsHTML);
+            }
+        }).fail(function handleFailedState(jqXHR) {
+            window.magicMatcherUtil.showAjaxMessages(jqXHR.responseJSON);
+        });
+    });
+});
