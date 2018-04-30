@@ -150,7 +150,6 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
             $form = new \dokuwiki\Form\Form(['data-service' => $serviceID]);
             $form->addFieldsetOpen($this->getLang('legend:user'));
             $form->addTagOpen('p');
-
             $form->addHTML($authorizedUserLabel . ' ' . $reconfigureLink);
             $form->addTagClose('p');
             $form->addFieldsetClose();

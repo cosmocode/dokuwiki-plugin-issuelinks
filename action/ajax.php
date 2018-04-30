@@ -145,6 +145,7 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
         usort($repos, function ($repo1, $repo2) {
             return $repo1->displayName < $repo2->displayName ? -1 : 1;
         });
+        $importSVG = inlineSVG(__DIR__ . '/../images/import.svg');
         foreach ($repos as $repo) {
             $stateIssue = empty($repo->hookID) ? 'inactive' : 'active';
             if ($repo->error === 403) {
@@ -158,7 +159,6 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
             $issueHookTitle = $repo->error === 403 ? 'The associated account has insufficient rights for this action' : 'Toggle the hook for issue-events';
             $html .= "<li><div class='li'>";
             $html .= "<span title='$issueHookTitle' data-project='$project' $issueHookID class='repohookstatus $stateIssue issue'></span>";
-            $importSVG = inlineSVG(__DIR__ . '/../images/import.svg');
             $html .= "<button title='Import all issues of this repository' data-project='$project' class='issueImport js-importIssues'>$importSVG</button>";
             $html .= "<span class='mm_reponame'>$repoDisplayName</span>";
             $html .= '</div></li>';
