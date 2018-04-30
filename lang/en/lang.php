@@ -26,6 +26,8 @@ $lang['label gitlab:choose organisation'] = 'Choose which group\'s project-webho
 $lang['label:project dropdown'] = 'Select the project';
 $lang['label:issue dropdown'] = 'Select the issue';
 $lang['label:is merge request'] = 'Is Merge Request';
+$lang['label: reconfigure service'] = 'Click here to reconfigure this service';
+$lang['label: authorized with user'] = 'Authorized with user %s.';
 
 $lang['placeholder:project'] = 'e.g.: SPR';
 $lang['placeholder:repository'] = 'groupname/projectname';

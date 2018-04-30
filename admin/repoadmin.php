@@ -70,7 +70,7 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
         foreach ($services as $serviceID => $serviceClass) {
             $service = $serviceClass::getInstance();
             $this->orgs[$serviceID] = [];
-            if (!$service->isConfigured()) {
+            if ($INPUT->str('reconfigureService') === $serviceID || !$service->isConfigured()) {
                 $this->configNeeded[] = $serviceID;
                 continue;
             }
@@ -143,10 +143,15 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
         } elseif (count($this->orgs[$serviceID]) === 0) {
             $html .= '<p>No organisations available for ' . $serviceName . '</p>';
         } else {
+            global $INPUT;
+            $reconfigureURL = $INPUT->server->str('REQUEST_URI') . '&reconfigureService=' . $serviceID;
+            $reconfigureLink = "<a href=\"$reconfigureURL\">{$this->getLang('label: reconfigure service')}</a>";
+            $authorizedUserLabel = sprintf($this->getLang('label: authorized with user'),$service->getUserString());
             $form = new \dokuwiki\Form\Form(['data-service' => $serviceID]);
             $form->addFieldsetOpen($this->getLang('legend:user'));
             $form->addTagOpen('p');
-            $form->addHTML('Authorized with user ' . $service->getUserString() . '. To change authorization please visit FIXME.');
+
+            $form->addHTML($authorizedUserLabel . ' ' . $reconfigureLink);
             $form->addTagClose('p');
             $form->addFieldsetClose();
             $form->addFieldsetOpen($this->getLang("legend:group $serviceID"));
@@ -156,7 +161,7 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
             $html .= $form->toHTML();
             $html .= "<div data-service='$serviceID' class='repo_area'></div>";
         }
-        $html .= "</div>"; // <div data-service='$servicename' class='service_area'>
+        $html .= '</div>'; // <div data-service='$servicename' class='service_area'>
         return $html;
     }
 
