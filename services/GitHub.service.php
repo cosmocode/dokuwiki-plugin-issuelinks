@@ -391,23 +391,9 @@ class GitHub extends AbstractService
         $type = false;
         foreach ($info['labels'] as $label) {
             $labels[] = $label['name'];
-            if (!$type) {
-                switch ($label['name']) {
-                    case 'bug':
-                        $type = 'bug';
-                        break;
-                    case 'enhancement':
-                        $type = 'improvement';
-                        break;
-                    case 'feature':
-                        $type = 'story';
-                        break;
-                    default:
-                }
-            }
             $issue->setLabelData($label['name'], '#' . $label['color']);
         }
-        $issue->setType($type ? $type : 'unknown');
+        $issue->setType($this->getTypeFromLabels($labels));
         $issue->setStatus(isset($info['merged']) ? 'merged' : $info['state']);
         $issue->setUpdated($info['updated_at']);
         if (!empty($info['milestone'])) {
@@ -417,6 +403,27 @@ class GitHub extends AbstractService
         if ($info['assignee']) {
             $issue->setAssignee($info['assignee']['login'], $info['assignee']['avatar_url']);
         }
+    }
+
+    protected function getTypeFromLabels(array $labels)
+    {
+        $bugTypeLabels = ['bug'];
+        $improvementTypeLabels = ['enhancement'];
+        $storyTypeLabels = ['feature'];
+
+        if (count(array_intersect($labels, $bugTypeLabels))) {
+            return 'bug';
+        }
+
+        if (count(array_intersect($labels, $improvementTypeLabels))) {
+            return 'improvement';
+        }
+
+        if (count(array_intersect($labels, $storyTypeLabels))) {
+            return 'story';
+        }
+
+        return 'unknown';
     }
 
     public function getListOfAllUserOrganisations()

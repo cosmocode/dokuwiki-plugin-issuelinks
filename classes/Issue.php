@@ -19,7 +19,7 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
     private $summary = '';
     private $description = '';
     private $status = '';
-    private $type = '';
+    private $type = 'unknown';
     private $components = [];
     private $labels = [];
     private $priority = '';

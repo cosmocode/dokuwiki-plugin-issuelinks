@@ -335,21 +335,7 @@ class GitLab extends AbstractService
         $issue->setSummary($info['title']);
         $issue->setDescription($info['description']);
 
-        // todo: at some point this should be made configurable
-        if (!empty($info['labels']) && is_array($info['labels'])) {
-            if (in_array('bug', $info['labels'])) {
-                $type = 'bug';
-            } elseif (in_array('enhancement', $info['labels'])) {
-                $type = 'improvement';
-            } elseif (in_array('feature', $info['labels'])) {
-                $type = 'story';
-            } else {
-                $type = 'unknown';
-            }
-        } else {
-            $type = 'unknown';
-        }
-        $issue->setType($type);
+        $issue->setType($this->getTypeFromLabels($info['labels']));
         $issue->setStatus($info['state']);
         $issue->setUpdated($info['updated_at']);
         $issue->setLabels($info['labels']);
@@ -363,6 +349,27 @@ class GitLab extends AbstractService
         if (!empty($info['assignee'])) {
             $issue->setAssignee($info['assignee']['name'], $info['assignee']['avatar_url']);
         }
+    }
+
+    protected function getTypeFromLabels(array $labels)
+    {
+        $bugTypeLabels = ['bug'];
+        $improvementTypeLabels = ['enhancement'];
+        $storyTypeLabels = ['feature'];
+
+        if (count(array_intersect($labels, $bugTypeLabels))) {
+            return 'bug';
+        }
+
+        if (count(array_intersect($labels, $improvementTypeLabels))) {
+            return 'improvement';
+        }
+
+        if (count(array_intersect($labels, $storyTypeLabels))) {
+            return 'story';
+        }
+
+        return 'unknown';
     }
 
     /**
