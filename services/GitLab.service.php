@@ -143,7 +143,6 @@ class GitLab extends AbstractService
     public function hydrateConfigForm(Form $configForm)
     {
         $link = 'https://<em>your.gitlab.host</em>/profile/personal_access_tokens';
-        $rawGitLabURL = null;
         if (null !== $this->gitlabUrl) {
             $url = $this->gitlabUrl . '/profile/personal_access_tokens';
             $link = "<a href=\"$url\">$url</a>";
@@ -207,7 +206,6 @@ class GitLab extends AbstractService
             $repo = new Repository();
             $repo->full_name = $project['path_with_namespace'];
             $repo->displayName = $project['name'];
-            $repoHooks = [];
             try {
                 $repoHooks = $this->makeSingleGitLabGetRequest("/projects/$organisation%2F{$project['path']}/hooks?per_page=100");
             } catch (HTTPRequestException $e) {

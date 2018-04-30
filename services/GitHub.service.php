@@ -123,7 +123,6 @@ class GitHub extends AbstractService
     protected function makeGitHubGETRequest($endpoint, $max = null)
     {
         $results = [];
-        $error = null;
         $waittime = 0;
         /** @var \helper_plugin_issuelinks_util $utils */
         $utils = plugin_load('helper', 'issuelinks_util');
@@ -388,7 +387,6 @@ class GitHub extends AbstractService
         $issue->setSummary($info['title']);
         $issue->setDescription($info['body']);
         $labels = [];
-        $type = false;
         foreach ($info['labels'] as $label) {
             $labels[] = $label['name'];
             $issue->setLabelData($label['name'], '#' . $label['color']);

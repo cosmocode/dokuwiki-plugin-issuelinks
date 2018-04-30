@@ -28,8 +28,6 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
     private $versions = [];
     private $duedate = null;
     private $updated = null;
-    /** @var int may be set if this issue is created in specific relation to another issue */
-    private $relatedWeight = 0;
     private $parent;
     private $errors = [];
     private $isValid = null;
