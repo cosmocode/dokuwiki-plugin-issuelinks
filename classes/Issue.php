@@ -284,19 +284,17 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
     }
 
     /**
-     * @param array $components
+     * @param array|string $components
      *
      * @return Issue
      */
     public function setComponents($components)
     {
-        if (!is_array($components)) {
+        if (is_string($components)) {
             $components = array_filter(array_map('trim', explode(',', $components)));
         }
         if (!empty($components[0]['name'])) {
-            $components = array_map(function ($component) {
-                return $component['name'];
-            }, $components);
+            $components = array_column($components, 'name');
         }
         $this->components = $components;
         return $this;
@@ -311,7 +309,7 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
     }
 
     /**
-     * @param array $labels
+     * @param array|string $labels
      *
      * @return Issue
      */
@@ -373,7 +371,7 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
     }
 
     /**
-     * @param array $versions
+     * @param array|string $versions
      *
      * @return Issue
      */
