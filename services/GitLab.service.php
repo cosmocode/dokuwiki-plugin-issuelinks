@@ -6,7 +6,6 @@ use dokuwiki\Form\Form;
 use dokuwiki\plugin\issuelinks\classes\ExternalServerException;
 use dokuwiki\plugin\issuelinks\classes\HTTPRequestException;
 use dokuwiki\plugin\issuelinks\classes\Issue;
-use dokuwiki\plugin\issuelinks\classes\IssueLinksException;
 use dokuwiki\plugin\issuelinks\classes\Repository;
 use dokuwiki\plugin\issuelinks\classes\RequestResult;
 
@@ -36,6 +35,44 @@ class GitLab extends AbstractService
     }
 
     /**
+     * Decide whether the provided issue is valid
+     *
+     * @param Issue $issue
+     *
+     * @return bool
+     */
+    public static function isIssueValid(Issue $issue)
+    {
+        $summary = $issue->getSummary();
+        $valid = !blank($summary);
+        $status = $issue->getStatus();
+        $valid &= !blank($status);
+        return $valid;
+    }
+
+    /**
+     * Provide the character separation the project name from the issue number, may be different for merge requests
+     *
+     * @param bool $isMergeRequest
+     *
+     * @return string
+     */
+    public static function getProjectIssueSeparator($isMergeRequest)
+    {
+        return $isMergeRequest ? '!' : '#';
+    }
+
+    public static function isOurWebhook()
+    {
+        global $INPUT;
+        if ($INPUT->server->has('HTTP_X_GITLAB_TOKEN')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * @return bool
      */
     public function isConfigured()
@@ -59,6 +96,57 @@ class GitLab extends AbstractService
         $this->user = $user;
 
         return true;
+    }
+
+    /**
+     * Make a single GET request to GitLab
+     *
+     * @param string $endpoint The endpoint as specifed in the gitlab documentatin (with leading slash!)
+     *
+     * @return array The response as array
+     * @throws HTTPRequestException
+     */
+    protected function makeSingleGitLabGetRequest($endpoint)
+    {
+        return $this->makeGitLabRequest($endpoint, [], 'GET');
+    }
+
+    /**
+     * Make a request to GitLab
+     *
+     * @param string $endpoint The endpoint as specifed in the gitlab documentatin (with leading slash!)
+     * @param array  $data
+     * @param string $method   the http method to make, defaults to 'GET'
+     * @param array  $headers  an array of additional headers to send along
+     *
+     * @return array|int The response as array or the number of an occurred error if it is in @param $errorsToBeReturned or an empty array if the error is not in @param $errorsToBeReturned
+     *
+     * @throws HTTPRequestException
+     */
+    protected function makeGitLabRequest($endpoint, array $data, $method, array $headers = [])
+    {
+        $url = $this->gitlabUrl . '/api/v4' . strtolower($endpoint);
+        $dataToBeSend = json_encode($data);
+        $defaultHeaders = [
+            'PRIVATE-TOKEN' => $this->token,
+            'Content-Type' => 'application/json',
+        ];
+
+        $this->dokuHTTPClient->headers = array_merge($this->dokuHTTPClient->headers, $defaultHeaders, $headers);
+
+        try {
+            $responseSuccess = $this->dokuHTTPClient->sendRequest($url, $dataToBeSend, $method);
+        } catch (\HTTPClientException $e) {
+            throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
+        }
+
+        if (!$responseSuccess || $this->dokuHTTPClient->status < 200 || $this->dokuHTTPClient->status > 206) {
+            if ($this->dokuHTTPClient->status >= 500) {
+                throw new ExternalServerException('request error', $this->dokuHTTPClient, $url, $method);
+            }
+            throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
+        }
+        return json_decode($this->dokuHTTPClient->resp_body, true);
     }
 
     /**
@@ -96,8 +184,6 @@ class GitLab extends AbstractService
             $db->saveKeyValuePair('gitlab_url', $url);
         }
     }
-
-
 
     public function getUserString()
     {
@@ -142,7 +228,7 @@ class GitLab extends AbstractService
                 $repo->error = (int)$e->getCode();
             }
 
-            $repoHooks = array_filter($repoHooks, array($this, 'isOurIssueHook'));
+            $repoHooks = array_filter($repoHooks, [$this, 'isOurIssueHook']);
             $ourIsseHook = reset($repoHooks);
             if (!empty($ourIsseHook)) {
                 $repo->hookID = $ourIsseHook['id'];
@@ -157,14 +243,14 @@ class GitLab extends AbstractService
     public function createWebhook($project)
     {
         $secret = md5(openssl_random_pseudo_bytes(32));
-        $data = array(
+        $data = [
             'url' => self::WEBHOOK_URL,
             'enable_ssl_verification' => true,
             'token' => $secret,
             'push_events' => false,
             'issues_events' => true,
             'merge_requests_events' => true,
-        );
+        ];
 
         try {
             $encProject = urlencode($project);
@@ -178,7 +264,7 @@ class GitLab extends AbstractService
             $status = $e->getCode();
         }
 
-        return array('data' => $data, 'status' => $status);
+        return ['data' => $data, 'status' => $status];
     }
 
     public function deleteWebhook($project, $hookid)
@@ -188,7 +274,7 @@ class GitLab extends AbstractService
         $encProject = urlencode($project);
         $endpoint = "/projects/$encProject/hooks/$hookid";
         try {
-            $data = $this->makeGitLabRequest($endpoint, array(), 'DELETE');
+            $data = $this->makeGitLabRequest($endpoint, [], 'DELETE');
             $status = $this->dokuHTTPClient->status;
             $db->deleteWebhook('gitlab', $project, $hookid);
         } catch (HTTPRequestException $e) {
@@ -196,7 +282,7 @@ class GitLab extends AbstractService
             $status = $e->getCode();
         }
 
-        return array('data' => $data, 'status' => $status);
+        return ['data' => $data, 'status' => $status];
     }
 
     /**
@@ -211,34 +297,6 @@ class GitLab extends AbstractService
     public function getIssueURL($projectId, $issueId, $isMergeRequest)
     {
         return $this->gitlabUrl . '/' . $projectId . ($isMergeRequest ? '/merge_requests/' : '/issues/') . $issueId;
-    }
-
-    /**
-     * Decide whether the provided issue is valid
-     *
-     * @param Issue $issue
-     *
-     * @return bool
-     */
-    public static function isIssueValid(Issue $issue)
-    {
-        $summary = $issue->getSummary();
-        $valid = !blank($summary);
-        $status = $issue->getStatus();
-        $valid &= !blank($status);
-        return $valid;
-    }
-
-    /**
-     * Provide the character separation the project name from the issue number, may be different for merge requests
-     *
-     * @param bool $isMergeRequest
-     *
-     * @return string
-     */
-    public static function getProjectIssueSeparator($isMergeRequest)
-    {
-        return $isMergeRequest ? '!' : '#';
     }
 
     /**
@@ -282,17 +340,94 @@ class GitLab extends AbstractService
         }
     }
 
+    /**
+     * @param Issue $issue
+     * @param array $info
+     */
+    protected function setIssueData(Issue $issue, $info)
+    {
+        $issue->setSummary($info['title']);
+        $issue->setDescription($info['description']);
+
+        // todo: at some point this should be made configurable
+        if (!empty($info['labels']) && is_array($info['labels'])) {
+            if (in_array('bug', $info['labels'])) {
+                $type = 'bug';
+            } elseif (in_array('enhancement', $info['labels'])) {
+                $type = 'improvement';
+            } elseif (in_array('feature', $info['labels'])) {
+                $type = 'story';
+            } else {
+                $type = 'unknown';
+            }
+        } else {
+            $type = 'unknown';
+        }
+        $issue->setType($type);
+        $issue->setStatus($info['state']);
+        $issue->setUpdated($info['updated_at']);
+        $issue->setLabels($info['labels']);
+        if (!empty($info['milestone'])) {
+            $issue->setVersions([$info['milestone']['title']]);
+        }
+        if (!empty($info['milestone'])) {
+            $issue->setDuedate($info['duedate']);
+        }
+
+        if (!empty($info['assignee'])) {
+            $issue->setAssignee($info['assignee']['name'], $info['assignee']['avatar_url']);
+        }
+    }
+
+    /**
+     * Parse a string for issue-ids
+     *
+     * Currently only parses issues for the same repo and jira issues
+     *
+     * @param string $currentProject
+     * @param string $description
+     *
+     * @return array
+     */
+    public function parseMergeRequestDescription($currentProject, $description)
+    {
+        $issues = [];
+
+        $issueOwnRepoPattern = '/(?:\W|^)#([1-9]\d*)\b/';
+        preg_match_all($issueOwnRepoPattern, $description, $gitlabMatches);
+        foreach ($gitlabMatches[1] as $issueId) {
+            $issues[] = [
+                'service' => 'gitlab',
+                'project' => $currentProject,
+                'issueId' => $issueId,
+            ];
+        }
+
+        $jiraMatches = [];
+        $jiraPattern = '/[A-Z0-9]+-[1-9]\d*/';
+        preg_match_all($jiraPattern, $description, $jiraMatches);
+        foreach ($jiraMatches[0] as $match) {
+            list($project, $issueId) = explode('-', $match);
+            $issues[] = [
+                'service' => 'jira',
+                'project' => $project,
+                'issueId' => $issueId,
+            ];
+        }
+        return $issues;
+    }
+
     public function retrieveAllIssues($projectKey, &$startat = 0)
     {
         $perPage = 100;
-        $page = ceil(($startat+1)/$perPage);
+        $page = ceil(($startat + 1) / $perPage);
         $endpoint = '/projects/' . urlencode($projectKey) . "/issues?page=$page&per_page=$perPage";
         $issues = $this->makeSingleGitLabGetRequest($endpoint);
         $this->total = $this->estimateTotal($perPage, count($issues));
         $mrEndpoint = '/projects/' . urlencode($projectKey) . "/merge_requests?page=$page&per_page=$perPage";
         $mrs = $this->makeSingleGitLabGetRequest($mrEndpoint);
         $this->total += $this->estimateTotal($perPage, count($mrs));
-        $retrievedIssues = array();
+        $retrievedIssues = [];
         try {
             foreach ($issues as $issueData) {
                 $issue = Issue::getInstance('gitlab', $projectKey, $issueData['iid'], false);
@@ -327,6 +462,32 @@ class GitLab extends AbstractService
     }
 
     /**
+     * Estimate the total amount of results
+     *
+     * @param int $perPage amount of results per page
+     * @param int $default what is returned if the total can not be calculated otherwise
+     *
+     * @return
+     */
+    protected function estimateTotal($perPage, $default)
+    {
+        $headers = $this->dokuHTTPClient->resp_headers;
+
+        if (empty($headers['link'])) {
+            return $default;
+        }
+
+        /** @var \helper_plugin_issuelinks_util $util */
+        $util = plugin_load('helper', 'issuelinks_util');
+        $links = $util->parseHTTPLinkHeaders($headers['link']);
+        preg_match('/page=(\d+)$/', $links['last'], $matches);
+        if (!empty($matches[1])) {
+            return $matches[1] * $perPage;
+        }
+        return $default;
+    }
+
+    /**
      * Get the total of issues currently imported by retrieveAllIssues()
      *
      * This may be an estimated number
@@ -336,16 +497,6 @@ class GitLab extends AbstractService
     public function getTotalIssuesBeingImported()
     {
         return $this->total;
-    }
-
-    public static function isOurWebhook()
-    {
-        global $INPUT;
-        if ($INPUT->server->has('HTTP_X_GITLAB_TOKEN')) {
-            return true;
-        }
-
-        return false;
     }
 
     /**
@@ -440,160 +591,5 @@ class GitLab extends AbstractService
         }
 
         return true;
-    }
-
-
-    /**
-     * Estimate the total amount of results
-     *
-     * @param int $perPage amount of results per page
-     * @param int $default what is returned if the total can not be calculated otherwise
-     *
-     * @return
-     */
-    protected function estimateTotal($perPage, $default)
-    {
-        $headers = $this->dokuHTTPClient->resp_headers;
-
-        if (empty($headers['link'])) {
-            return $default;
-        }
-
-        /** @var \helper_plugin_issuelinks_util $util */
-        $util = plugin_load('helper', 'issuelinks_util');
-        $links = $util->parseHTTPLinkHeaders($headers['link']);
-        preg_match('/page=(\d+)$/', $links['last'], $matches);
-        if (!empty($matches[1])) {
-            return $matches[1] * $perPage;
-        }
-        return $default;
-    }
-
-
-
-    /**
-     * @param Issue $issue
-     * @param array $info
-     */
-    protected function setIssueData(Issue $issue, $info) {
-        $issue->setSummary($info['title']);
-        $issue->setDescription($info['description']);
-
-        // todo: at some point this should be made configurable
-        if (!empty($info['labels']) && is_array($info['labels'])) {
-            if (in_array('bug', $info['labels'])) {
-                $type = 'bug';
-            } elseif (in_array('enhancement', $info['labels'])) {
-                $type = 'improvement';
-            } elseif (in_array('feature', $info['labels'])) {
-                $type = 'story';
-            } else {
-                $type = 'unknown';
-            }
-        } else {
-            $type = 'unknown';
-        }
-        $issue->setType($type);
-        $issue->setStatus($info['state']);
-        $issue->setUpdated($info['updated_at']);
-        $issue->setLabels($info['labels']);
-        if (!empty($info['milestone'])) {
-            $issue->setVersions([$info['milestone']['title']]);
-        }
-        if (!empty($info['milestone'])) {
-            $issue->setDuedate($info['duedate']);
-        }
-
-        if (!empty($info['assignee'])) {
-            $issue->setAssignee($info['assignee']['name'], $info['assignee']['avatar_url']);
-        }
-    }
-
-    /**
-     * Parse a string for issue-ids
-     *
-     * Currently only parses issues for the same repo and jira issues
-     *
-     * @param string $currentProject
-     * @param string $description
-     *
-     * @return array
-     */
-    public function parseMergeRequestDescription($currentProject, $description) {
-        $issues = array();
-
-        $issueOwnRepoPattern = '/(?:\W|^)#([1-9]\d*)\b/';
-        preg_match_all($issueOwnRepoPattern, $description, $gitlabMatches);
-        foreach ($gitlabMatches[1] as $issueId) {
-            $issues[] = array(
-                'service' => 'gitlab',
-                'project' => $currentProject,
-                'issueId' => $issueId,
-            );
-        }
-
-        $jiraMatches = array();
-        $jiraPattern = '/[A-Z0-9]+-[1-9]\d*/';
-        preg_match_all($jiraPattern, $description, $jiraMatches);
-        foreach ($jiraMatches[0] as $match) {
-            list($project, $issueId) = explode('-', $match);
-            $issues[] = array(
-                'service' => 'jira',
-                'project' => $project,
-                'issueId' => $issueId,
-            );
-        }
-        return $issues;
-    }
-
-
-    /**
-     * Make a single GET request to GitLab
-     *
-     * @param string $endpoint The endpoint as specifed in the gitlab documentatin (with leading slash!)
-     *
-     * @return array The response as array
-     * @throws HTTPRequestException
-     */
-    protected function makeSingleGitLabGetRequest($endpoint) {
-        return $this->makeGitLabRequest($endpoint, array(), 'GET');
-    }
-
-
-    /**
-     * Make a request to GitLab
-     *
-     * @param string $endpoint The endpoint as specifed in the gitlab documentatin (with leading slash!)
-     * @param array $data
-     * @param string $method the http method to make, defaults to 'GET'
-     * @param array $headers an array of additional headers to send along
-     *
-     * @return array|int The response as array or the number of an occurred error if it is in @param $errorsToBeReturned or an empty array if the error is not in @param $errorsToBeReturned
-     *
-     * @throws HTTPRequestException
-     */
-    protected function makeGitLabRequest($endpoint, array $data, $method, array $headers = array()) {
-        $url = $this->gitlabUrl . '/api/v4' . strtolower($endpoint);
-        $dataToBeSend = json_encode($data);
-        $defaultHeaders = [
-            'PRIVATE-TOKEN' => $this->token,
-            'Content-Type' => 'application/json',
-        ];
-
-        $this->dokuHTTPClient->headers = array_merge($this->dokuHTTPClient->headers, $defaultHeaders, $headers);
-
-        try {
-            $responseSuccess = $this->dokuHTTPClient->sendRequest($url, $dataToBeSend, $method);
-        } catch (\HTTPClientException $e) {
-            throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
-        }
-
-        if (!$responseSuccess || $this->dokuHTTPClient->status < 200 || $this->dokuHTTPClient->status > 206) {
-            if ($this->dokuHTTPClient->status >= 500) {
-                throw new ExternalServerException('request error', $this->dokuHTTPClient, $url, $method);
-            }
-            throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
-        }
-        return json_decode($this->dokuHTTPClient->resp_body, true);
     }
 }

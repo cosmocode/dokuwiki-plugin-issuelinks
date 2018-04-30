@@ -19,17 +19,6 @@ interface ServiceInterface
     public static function getInstance();
 
     /**
-     * Get the url to the given issue at the given project
-     *
-     * @param      $projectId
-     * @param      $issueId
-     * @param bool $isMergeRequest ignored, GitHub routes the requests correctly by itself
-     *
-     * @return string
-     */
-    public function getIssueURL($projectId, $issueId, $isMergeRequest);
-
-    /**
      * Decide whether the provided issue is valid
      *
      * @param Issue $issue
@@ -46,6 +35,19 @@ interface ServiceInterface
      * @return string
      */
     public static function getProjectIssueSeparator($isMergeRequest);
+
+    public static function isOurWebhook();
+
+    /**
+     * Get the url to the given issue at the given project
+     *
+     * @param      $projectId
+     * @param      $issueId
+     * @param bool $isMergeRequest ignored, GitHub routes the requests correctly by itself
+     *
+     * @return string
+     */
+    public function getIssueURL($projectId, $issueId, $isMergeRequest);
 
     /**
      * @param string $issueSyntax
@@ -115,10 +117,6 @@ interface ServiceInterface
      * @return array
      */
     public function deleteWebhook($project, $hookid);
-
-
-
-    public static function isOurWebhook();
 
     /**
      * Do all checks to verify that the webhook is expected and actually ours

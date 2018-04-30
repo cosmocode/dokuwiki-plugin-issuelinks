@@ -7,19 +7,24 @@
  */
 
 // must be run within Dokuwiki
-if(!defined('DOKU_INC')) die();
+if (!defined('DOKU_INC')) {
+    die();
+}
 
-class helper_plugin_issuelinks_util extends DokuWiki_Plugin {
+class helper_plugin_issuelinks_util extends DokuWiki_Plugin
+{
 
     /**
      * Parse the link header received by DokuHTTPClient
      *
      * @param string $linkHeader
+     *
      * @return array
      */
-    public function parseHTTPLinkHeaders ($linkHeader) {
+    public function parseHTTPLinkHeaders($linkHeader)
+    {
         $links = explode(',', $linkHeader);
-        $linkarray = array();
+        $linkarray = [];
         foreach ($links as $linkstring) {
             list($linktarget, $linkrel) = explode(';', $linkstring);
             $linkrel = substr(trim($linkrel), strlen('rel="'), -1);
@@ -31,28 +36,30 @@ class helper_plugin_issuelinks_util extends DokuWiki_Plugin {
 
     /**
      * @param string $page_id
-     * @param int $revision
+     * @param int    $revision
+     *
      * @return string
      */
-    public function getDiffUrl($page_id, $revision = 0) {
+    public function getDiffUrl($page_id, $revision = 0)
+    {
         if (empty($revision)) {
             $currentRevision = filemtime(wikiFN($page_id));
             $url = wl(
-                $page_id, array(
+                $page_id, [
                 "rev" => $currentRevision,
-                "do"  => "diff",
-            ), true
+                "do" => "diff",
+            ], true
             );
         } else {
             $changelog = new PageChangelog($page_id);
             $previousRevision = $changelog->getRelativeRevision($revision, -1);
             $url = wl(
-                $page_id, array(
-                "do"       => "diff",
-                "rev2[0]"  => $revision,
-                "rev2[1]"  => $previousRevision,
+                $page_id, [
+                "do" => "diff",
+                "rev2[0]" => $revision,
+                "rev2[1]" => $previousRevision,
                 "difftype" => "sidebyside",
-            ), true
+            ], true
             );
         }
         return $url;
@@ -63,19 +70,21 @@ class helper_plugin_issuelinks_util extends DokuWiki_Plugin {
      *
      * @param Exception $e
      */
-    public function reportException(Exception $e) {
+    public function reportException(Exception $e)
+    {
         msg(hsc($e->getMessage()), -1, $e->getLine(), $e->getFile());
         global $conf;
-        if($conf['allowdebug']) {
+        if ($conf['allowdebug']) {
             msg('<pre>' . hsc($e->getTraceAsString()) . '</pre>', -1);
         }
     }
 
     /**
-     * @param int    $code
-     * @param mixed  $msg
+     * @param int   $code
+     * @param mixed $msg
      */
-    public function sendResponse($code, $msg) {
+    public function sendResponse($code, $msg)
+    {
         header('Content-Type: application/json');
         if ((int)$code === 204) {
             http_status(200);
@@ -83,7 +92,7 @@ class helper_plugin_issuelinks_util extends DokuWiki_Plugin {
             http_status($code);
         }
         global $MSG;
-        echo json_encode(array('data' => $msg, 'msg' => $MSG));
+        echo json_encode(['data' => $msg, 'msg' => $MSG]);
     }
 
 
@@ -93,10 +102,12 @@ class helper_plugin_issuelinks_util extends DokuWiki_Plugin {
      * Adapted from http://stackoverflow.com/a/2524761/3293343
      *
      * @param string|int $timestamp
+     *
      * @return bool
      */
-    public function isValidTimeStamp($timestamp) {
-        return ((string) (int) $timestamp === (string)$timestamp);
+    public function isValidTimeStamp($timestamp)
+    {
+        return ((string)(int)$timestamp === (string)$timestamp);
     }
 
 }

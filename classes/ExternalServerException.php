@@ -3,11 +3,12 @@
 namespace dokuwiki\plugin\issuelinks\classes;
 
 /**
- * @class ExternalServerException
+ * @class   ExternalServerException
  *
  * A translatable exception
  *
  * @package dokuwiki\plugin\issuelinks\classes
  */
-class ExternalServerException extends HTTPRequestException {
+class ExternalServerException extends HTTPRequestException
+{
 }

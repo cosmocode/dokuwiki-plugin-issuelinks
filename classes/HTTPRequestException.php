@@ -9,13 +9,15 @@ namespace dokuwiki\plugin\issuelinks\classes;
  *
  * @package dokuwiki\plugin\issuelinks\classes
  */
-class HTTPRequestException extends IssueLinksException {
+class HTTPRequestException extends IssueLinksException
+{
     protected $httpError;
     protected $responseBody;
     protected $url;
     protected $method;
 
-    public function __construct($message, \DokuHTTPClient $httpClient, $url, $method) {
+    public function __construct($message, \DokuHTTPClient $httpClient, $url, $method)
+    {
         $this->code = $httpClient->status;
         $this->httpError = $httpClient->error;
         $this->responseBody = $httpClient->resp_body;
@@ -28,28 +30,32 @@ class HTTPRequestException extends IssueLinksException {
     /**
      * @return string
      */
-    public function getHttpError() {
+    public function getHttpError()
+    {
         return $this->httpError;
     }
 
     /**
      * @return string
      */
-    public function getResponseBody() {
+    public function getResponseBody()
+    {
         return $this->responseBody;
     }
 
     /**
      * @return string
      */
-    public function getUrl() {
+    public function getUrl()
+    {
         return $this->url;
     }
 
     /**
      * @return string
      */
-    public function getMethod() {
+    public function getMethod()
+    {
         return $this->method;
     }
 

@@ -70,8 +70,12 @@ jQuery(function initializeRepoAdminInterface() {
                 window.magicMatcherUtil.showAjaxMessages(response);
                 toggleHookIndicator(data, $this);
             })
-            .fail(function showErrorOnHook(jqXHR) { showError(jqXHR, $this); })
-            .always(function disablePulse() { $this.removeClass('pulse'); })
+            .fail(function showErrorOnHook(jqXHR) {
+                showError(jqXHR, $this);
+            })
+            .always(function disablePulse() {
+                $this.removeClass('pulse');
+            })
         ;
         $this.addClass('pulse');
     }
@@ -112,7 +116,9 @@ jQuery(function initializeRepoAdminInterface() {
                 $reposDiv.html(data);
                 $reposDiv.find('span.repohookstatus:not(.forbidden)').click(requestHookToogle);
             })
-            .fail(function showErrorOnRepoArea(jqXHR) { showError(jqXHR, $reposDiv); })
+            .fail(function showErrorOnRepoArea(jqXHR) {
+                showError(jqXHR, $reposDiv);
+            })
             .always(function enableThisSelectAgain() {
                 $this.prop('disabled', false);
             })
@@ -122,6 +128,7 @@ jQuery(function initializeRepoAdminInterface() {
     });
     var CHECK_IMPORT_STATUS_TIMEOUT = 1000;
     var checkImportStatusTimeoutID;
+
     function checkImportStatus(servicename, project, $importStatusElement) {
         var checkImportSettings = {
             url: DOKU_BASE + 'lib/exe/ajax.php',
@@ -130,7 +137,7 @@ jQuery(function initializeRepoAdminInterface() {
                 'issuelinks-action': 'checkImportStatus',
                 'issuelinks-service': servicename,
                 'issuelinks-project': project,
-            }
+            },
         };
         jQuery.post(checkImportSettings)
             .done(function (response) {
@@ -142,14 +149,14 @@ jQuery(function initializeRepoAdminInterface() {
                 var count = jQuery.isNumeric(data.count) ? data.count : 0;
                 if (jQuery.isNumeric(data.total) && data.total > 0) {
                     total = data.total;
-                    percent = Math.round(count/total*100);
+                    percent = Math.round(count / total * 100);
                 }
                 var statusText = LANG.plugins.issuelinks['status:' + data.status];
                 var progressText = '' + count + '/' + total + ' (' + percent + ' %) ' + statusText;
                 $importStatusElement
                     .text(progressText)
-                    .css('background-color','#ff9')
-                    .animate({backgroundColor: 'transparent'}, CHECK_IMPORT_STATUS_TIMEOUT/2)
+                    .css('background-color', '#ff9')
+                    .animate({ backgroundColor: 'transparent' }, CHECK_IMPORT_STATUS_TIMEOUT / 2)
                 ;
                 if (data.status && data.status === 'done') {
                     return;
@@ -159,7 +166,7 @@ jQuery(function initializeRepoAdminInterface() {
                     CHECK_IMPORT_STATUS_TIMEOUT,
                     servicename,
                     project,
-                    $importStatusElement
+                    $importStatusElement,
                 );
             })
             .fail(function (jqXHR) {
@@ -193,7 +200,7 @@ jQuery(function initializeRepoAdminInterface() {
                     CHECK_IMPORT_STATUS_TIMEOUT,
                     servicename,
                     project,
-                    $importStatusElement
+                    $importStatusElement,
                 );
             });
     });

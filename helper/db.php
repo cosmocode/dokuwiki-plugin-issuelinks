@@ -9,11 +9,31 @@
 // must be run within Dokuwiki
 use dokuwiki\plugin\issuelinks\classes\Issue;
 
-if(!defined('DOKU_INC')) die();
+if (!defined('DOKU_INC')) {
+    die();
+}
 
 class helper_plugin_issuelinks_db extends DokuWiki_Plugin
 {
     private $db = null;
+
+    /**
+     * Save a key value pair to the database
+     *
+     * @param $key
+     * @param $value
+     *
+     * @return bool|null Returns false on error, nothing otherwise
+     */
+    public function saveKeyValuePair($key, $value)
+    {
+        $db = $this->getDB();
+        if (!$db) {
+            return false;
+        }
+        $sql = 'REPLACE INTO opts VALUES (?, ?)';
+        $db->query($sql, [$key, $value]);
+    }
 
     /**
      * Gives access to the sqlite DB.
@@ -23,23 +43,26 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
      * @return helper_plugin_sqlite|null
      * @throws Exception Only thrown in unittests
      */
-    public function getDB() {
-        if(null === $this->db) {
+    public function getDB()
+    {
+        if (null === $this->db) {
             /** @var helper_plugin_sqlite $sqlite */
             $sqlite = plugin_load('helper', 'sqlite');
-            if(!$sqlite) {
+            if (!$sqlite) {
                 msg('This plugin requires the sqlite plugin. Please install it', -1);
                 return null;
             }
 
-            if($sqlite->getAdapter()->getName() !== DOKU_EXT_PDO) {
-                if(defined('DOKU_UNITTEST')) throw new \Exception('Couldn\'t load PDO sqlite.');
+            if ($sqlite->getAdapter()->getName() !== DOKU_EXT_PDO) {
+                if (defined('DOKU_UNITTEST')) {
+                    throw new \Exception('Couldn\'t load PDO sqlite.');
+                }
                 return null;
             }
             $sqlite->getAdapter()->setUseNativeAlter(true);
 
             // initialize the database connection
-            if(!$sqlite->init('issuelinks', DOKU_PLUGIN . 'issuelinks/db/')) {
+            if (!$sqlite->init('issuelinks', DOKU_PLUGIN . 'issuelinks/db/')) {
                 return null;
             }
 
@@ -48,33 +71,21 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
         return $this->db;
     }
 
-
-
-    /**
-     * Save a key value pair to the database
-     *
-     * @param $key
-     * @param $value
-     * @return bool|null Returns false on error, nothing otherwise
-     */
-    public function saveKeyValuePair($key, $value) {
-        $db = $this->getDB();
-        if(!$db) return false;
-        $sql = 'REPLACE INTO opts VALUES (?, ?)';
-        $db->query($sql, array($key, $value));
-    }
-
     /**
      * Get a value to a stored key from the database
      *
      * @param $key
+     *
      * @return bool|string
      */
-    public function getKeyValue($key) {
+    public function getKeyValue($key)
+    {
         $db = $this->getDB();
-        if(!$db) return false;
+        if (!$db) {
+            return false;
+        }
         $sql = 'SELECT val FROM opts WHERE opt = ?';
-        $res = $db->query($sql, array($key));
+        $res = $db->query($sql, [$key]);
         $value = $db->res2single($res);
         $db->res_close($res);
         return $value;
@@ -82,19 +93,52 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
 
 
     /**
-     * @param string $service   The name of the repository management service
-     * @param string $repo      The repository
-     * @param string $id        The id of the webhook
-     * @param string $secret    The secret to use when authenicationg incoming webhooks
+     * @param string $service The name of the repository management service
+     * @param string $repo    The repository
+     * @param string $id      The id of the webhook
+     * @param string $secret  The secret to use when authenicationg incoming webhooks
      */
-    public function saveWebhook($service, $repo, $id, $secret) {
-        $entity = array(
+    public function saveWebhook($service, $repo, $id, $secret)
+    {
+        $entity = [
             'service' => $service,
             'repository_id' => $repo,
             'id' => $id,
-            'secret' => $secret
-        );
+            'secret' => $secret,
+        ];
         $this->saveEntity('webhooks', $entity);
+    }
+
+    /**
+     * Saves the given key-value array to the given table
+     *
+     * @param string $table
+     * @param array  $entity associative array holding the key/value pairs
+     *
+     * @return bool|\SQLiteResult
+     */
+    private function saveEntity($table, $entity)
+    {
+        $db = $this->getDB();
+        if (!$db) {
+            return false;
+        }
+
+        $keys = implode(', ', array_keys($entity));
+        $vals = array_values($entity);
+        $wlds = implode(', ', array_fill(0, count($vals), '?'));
+
+        $sql = "REPLACE INTO $table ($keys) VALUES ($wlds)";
+        $ok = $db->query($sql, $vals);
+        if (empty($ok)) {
+            global $conf;
+            msg("Saving into table $table failed!", -1);
+            msg(print_r($entity, true), -1);
+            if ($conf['debug']) {
+                msg(dbg_backtrace(), -1);
+            }
+        }
+        return $ok;
     }
 
     /**
@@ -102,12 +146,41 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
      *
      * @param string $rmservice
      * @param string $repo
+     *
      * @return array
      */
-    public function getWebhookSecrets($service, $repo) {
+    public function getWebhookSecrets($service, $repo)
+    {
         $sql = "SELECT secret FROM webhooks WHERE service = ? AND repository_id = ?";
-        $secrets = $this->sqlArrayQuery($sql, array($service, $repo));
+        $secrets = $this->sqlArrayQuery($sql, [$service, $repo]);
         return $secrets;
+    }
+
+    /**
+     * make a provided sql query and return the resulting lines as an array of associative arrays
+     *
+     * @param string       $sql         the query
+     * @param string|array $conditional the parameters of the query
+     *
+     * @return array|bool
+     */
+    private function sqlArrayQuery($sql, $conditional)
+    {
+        if (substr(trim($sql), 0, strlen('SELECT')) !== 'SELECT') {
+            throw new InvalidArgumentException("SQL-Statement must be a SELECT statement! \n" . $sql);
+        }
+        if (strpos(trim($sql, ';'), ';') !== false) {
+            throw new InvalidArgumentException("SQL-Statement must be one single statement! \n" . $sql);
+        }
+        $db = $this->getDB();
+        if (!$db) {
+            return false;
+        }
+
+        $res = $db->query($sql, $conditional);
+        $result = $db->res2arr($res);
+        $db->res_close($res);
+        return $result;
     }
 
     /**
@@ -115,13 +188,34 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
      * @param string $repo
      * @param string $id
      */
-    public function deleteWebhook($service, $repo, $id) {
-        $entity = array(
+    public function deleteWebhook($service, $repo, $id)
+    {
+        $entity = [
             'service' => $service,
             'repository_id' => $repo,
-            'id' => $id
-        );
+            'id' => $id,
+        ];
         $this->deleteEntity('webhooks', $entity);
+    }
+
+    /**
+     * Deletes the given key-value array to the given table
+     *
+     * @param string $table
+     * @param array  $entity associative array holding the key/value pairs for the where clause
+     */
+    private function deleteEntity($table, $entity)
+    {
+        $db = $this->getDB();
+        if (!$db) {
+            return;
+        }
+
+        $where = implode(' = ? AND ', array_keys($entity)) . ' = ?';
+        $vals = array_values($entity);
+
+        $sql = "DELETE FROM $table WHERE $where";
+        $db->query($sql, $vals);
     }
 
     public function getWebhooks($service, $repo = null, $id = null)
@@ -141,15 +235,16 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
         return $webhooks;
     }
 
-
     /**
      * Save an issue into the database
      *
      * @param Issue $issue
+     *
      * @return bool
      */
-    public function saveIssue(Issue $issue) {
-        $ok = $this->saveEntity('issues', array (
+    public function saveIssue(Issue $issue)
+    {
+        $ok = $this->saveEntity('issues', [
             'service' => $issue->getServiceName(),
             'project' => $issue->getProject(),
             'id' => $issue->getKey(),
@@ -159,16 +254,15 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
             'type' => $issue->getType(),
             'status' => $issue->getStatus(),
             'parent' => $issue->getParent(),
-            'components' => implode(',',$issue->getComponents()),
+            'components' => implode(',', $issue->getComponents()),
             'labels' => implode(',', $issue->getLabels()),
             'priority' => $issue->getPriority(),
             'duedate' => $issue->getDuedate(),
             'versions' => implode(',', $issue->getVersions()),
-            'updated' => $issue->getUpdated()
-        ));
+            'updated' => $issue->getUpdated(),
+        ]);
         return (bool)$ok;
     }
-
 
     /**
      * Query the database for the issue corresponding to the given project and issueId
@@ -179,21 +273,23 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
      *
      * @return bool|array
      */
-    public function loadIssue($serviceName, $projectKey, $issueId, $isMergeRequest) {
+    public function loadIssue($serviceName, $projectKey, $issueId, $isMergeRequest)
+    {
         $sql = 'SELECT * FROM issues WHERE service = ? AND project = ? AND id = ? AND is_mergerequest = ?';
-        $issues = $this->sqlArrayQuery($sql, array($serviceName, $projectKey, $issueId, $isMergeRequest ? 1 : 0));
+        $issues = $this->sqlArrayQuery($sql, [$serviceName, $projectKey, $issueId, $isMergeRequest ? 1 : 0]);
         return blank($issues[0]) ? false : $issues[0];
     }
 
-    public function saveIssueIssues(Issue $issue, array $issues) {
-        $this->deleteEntity('issue_issues', array(
+    public function saveIssueIssues(Issue $issue, array $issues)
+    {
+        $this->deleteEntity('issue_issues', [
             'service' => $issue->getServiceName(),
             'project' => $issue->getProject(),
             'id' => $issue->getKey(),
             'is_mergerequest' => $issue->isMergeRequest() ? 1 : 0,
-        ));
+        ]);
         foreach ($issues as $issueData) {
-            $this->saveEntity('issue_issues', array(
+            $this->saveEntity('issue_issues', [
                 'service' => $issue->getServiceName(),
                 'project' => $issue->getProject(),
                 'id' => $issue->getKey(),
@@ -202,11 +298,12 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
                 'referenced_project' => $issueData['project'],
                 'referenced_id' => $issueData['issueId'],
                 'referenced_is_mergerequest' => 0,
-            ));
+            ]);
         }
     }
 
-    public function getMergeRequestsReferencingIssue($serviceName, $project, $issueId, $isMergeRequest) {
+    public function getMergeRequestsReferencingIssue($serviceName, $project, $issueId, $isMergeRequest)
+    {
         $sql = '
         SELECT service, project as project_id, id as issue_id, is_mergerequest
         FROM issue_issues
@@ -216,7 +313,7 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
         AND referenced_is_mergerequest = ?
         AND is_mergerequest = 1
         ';
-        return $this->sqlArrayQuery($sql, array($serviceName, $project, $issueId, $isMergeRequest ? 1 : 0));
+        return $this->sqlArrayQuery($sql, [$serviceName, $project, $issueId, $isMergeRequest ? 1 : 0]);
     }
 
     /**
@@ -228,7 +325,8 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
      *
      * @return array
      */
-    public function getAllPageLinkingToIssue($serviceName, $projectKey, $issue_id, $isMergeRequest) {
+    public function getAllPageLinkingToIssue($serviceName, $projectKey, $issue_id, $isMergeRequest)
+    {
         $sql = "SELECT page, rev
                 FROM pagerev_issues
                 WHERE service = ?
@@ -237,7 +335,7 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
                 AND is_mergerequest = ?
                 AND type = 'link'
                 ORDER BY rev DESC ";
-        return $this->sqlArrayQuery($sql, array($serviceName, $projectKey, $issue_id, $isMergeRequest ? 1 : 0));
+        return $this->sqlArrayQuery($sql, [$serviceName, $projectKey, $issue_id, $isMergeRequest ? 1 : 0]);
     }
 
     /**
@@ -250,21 +348,22 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
      *
      * @return array
      */
-    public function removeOldLinks($serviceName, $projectKey, $issue_id, $isMergeRequest, $pages) {
-        $activeLinks = array();
+    public function removeOldLinks($serviceName, $projectKey, $issue_id, $isMergeRequest, $pages)
+    {
+        $activeLinks = [];
 
-        foreach($pages as $linkingPage) {
+        foreach ($pages as $linkingPage) {
             $changelog = new PageChangelog($linkingPage['page']);
             $currentRev = $changelog->getRelativeRevision(time(), -1);
-            if($linkingPage['rev'] < $currentRev) {
-                $entity = array(
-                    'page'     => $linkingPage['page'],
+            if ($linkingPage['rev'] < $currentRev) {
+                $entity = [
+                    'page' => $linkingPage['page'],
                     'issue_id' => $issue_id,
                     'project_id' => $projectKey,
                     'service' => $serviceName,
                     'is_mergerequest' => $isMergeRequest ? '1' : '0',
-                    'type'     => 'link',
-                );
+                    'type' => 'link',
+                ];
                 $this->deleteEntity('pagerev_issues', $entity);
             } else {
                 $activeLinks[] = $linkingPage;
@@ -287,7 +386,8 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
      *
      * @throws \InvalidArgumentException
      */
-    public function savePageRevIssues($page, $rev, $serviceName, $project, $issue_id, $isMergeRequest, $type) {
+    public function savePageRevIssues($page, $rev, $serviceName, $project, $issue_id, $isMergeRequest, $type)
+    {
         /** @var helper_plugin_issuelinks_util $util */
         $util = plugin_load('helper', 'issuelinks_util');
         if (!$util->isValidTimeStamp($rev)) {
@@ -304,15 +404,15 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
         if (!is_numeric($issue_id) || (int)$issue_id != $issue_id) {
             throw new InvalidArgumentException("IssueId must be an integer!");
         }
-        $ok = $this->saveEntity('pagerev_issues', array (
+        $ok = $this->saveEntity('pagerev_issues', [
             'page' => $page,
             'rev' => $rev,
             'service' => $serviceName,
             'project_id' => $project,
             'issue_id' => $issue_id,
             'is_mergerequest' => $isMergeRequest ? '1' : '0',
-            'type' => $type
-        ));
+            'type' => $type,
+        ]);
 
         return (bool)$ok;
     }
@@ -324,9 +424,11 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
      * @param int    $rev
      * @param string $summary
      * @param string $user
+     *
      * @return bool
      */
-    public function savePageRev($page, $rev, $summary, $user) {
+    public function savePageRev($page, $rev, $summary, $user)
+    {
         if (blank($page) || blank($rev) || blank($user)) {
             throw new InvalidArgumentException("No empty values allowed!");
         }
@@ -335,12 +437,12 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
         if (!$util->isValidTimeStamp($rev)) {
             throw new InvalidArgumentException("Second parameter must be a valid timestamp!");
         }
-        $ok = $this->saveEntity('pagerevs', array (
+        $ok = $this->saveEntity('pagerevs', [
             'page' => $page,
             'rev' => $rev,
             'summary' => $summary,
             'user' => $user,
-        ));
+        ]);
         return (bool)$ok;
     }
 
@@ -354,85 +456,17 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
      * @param bool   $isMergeRequest
      * @param string $type        either 'context' or 'link'
      */
-    public function deleteAllIssuePageRevisions($page, $serviceName, $projectKey, $issueId, $isMergeRequest, $type) {
+    public function deleteAllIssuePageRevisions($page, $serviceName, $projectKey, $issueId, $isMergeRequest, $type)
+    {
         // todo: validation
-        $this->deleteEntity('pagerev_issues', array(
+        $this->deleteEntity('pagerev_issues', [
             'page' => $page,
             'service' => $serviceName,
             'project_id' => $projectKey,
             'issue_id' => $issueId,
             'is_mergerequest' => $isMergeRequest ? 1 : 0,
-            'type' => $type
-        ));
-    }
-
-    /**
-     * Deletes the given key-value array to the given table
-     *
-     * @param string $table
-     * @param array $entity associative array holding the key/value pairs for the where clause
-     */
-    private function deleteEntity($table, $entity) {
-        $db = $this->getDB();
-        if(!$db) return;
-
-        $where = implode(' = ? AND ', array_keys($entity)) . ' = ?';
-        $vals = array_values($entity);
-
-        $sql = "DELETE FROM $table WHERE $where";
-        $db->query($sql, $vals);
-    }
-
-    /**
-     * Saves the given key-value array to the given table
-     *
-     * @param string $table
-     * @param array $entity associative array holding the key/value pairs
-     * @return bool|\SQLiteResult
-     */
-    private function saveEntity($table, $entity) {
-        $db = $this->getDB();
-        if(!$db) return false;
-
-        $keys = implode(', ', array_keys($entity));
-        $vals = array_values($entity);
-        $wlds = implode(', ', array_fill(0, count($vals), '?'));
-
-        $sql = "REPLACE INTO $table ($keys) VALUES ($wlds)";
-        $ok = $db->query($sql, $vals);
-        if (empty($ok)) {
-            global $conf;
-            msg("Saving into table $table failed!", -1);
-            msg(print_r($entity, true), -1);
-            if ($conf['debug']) {
-                msg(dbg_backtrace(), -1);
-            }
-        }
-        return $ok;
-    }
-
-    /**
-     * make a provided sql query and return the resulting lines as an array of associative arrays
-     *
-     * @param string        $sql          the query
-     * @param string|array  $conditional  the parameters of the query
-     *
-     * @return array|bool
-     */
-    private function sqlArrayQuery($sql, $conditional) {
-        if (substr(trim($sql),0,strlen('SELECT')) !== 'SELECT') {
-            throw new InvalidArgumentException("SQL-Statement must be a SELECT statement! \n" . $sql);
-        }
-        if (strpos(trim($sql,';'), ';') !== false) {
-            throw new InvalidArgumentException("SQL-Statement must be one single statement! \n" . $sql);
-        }
-        $db = $this->getDB();
-        if(!$db) return false;
-
-        $res = $db->query($sql,$conditional);
-        $result = $db->res2arr($res);
-        $db->res_close($res);
-        return $result;
+            'type' => $type,
+        ]);
     }
 
 }

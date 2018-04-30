@@ -9,7 +9,8 @@ namespace dokuwiki\plugin\issuelinks\classes;
  *
  * @package dokuwiki\plugin\issuelinks\classes
  */
-class IssueLinksException extends \RuntimeException {
+class IssueLinksException extends \RuntimeException
+{
 
     protected $trans_prefix = 'Exception: ';
 
@@ -19,11 +20,12 @@ class IssueLinksException extends \RuntimeException {
      * @param string $message
      * @param ...string $vars
      */
-    public function __construct($message) {
+    public function __construct($message)
+    {
         /** @var \helper_plugin_struct $plugin */
         $plugin = plugin_load('helper', 'issuelinks_util');
         $trans = $plugin->getLang($this->trans_prefix . $message);
-        if(!$trans) {
+        if (!$trans) {
             $trans = $message;
         }
 

@@ -17,6 +17,10 @@ if (!defined('DOKU_INC')) {
 class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
 {
 
+    private $orgs = [];
+    private $authNeeded = [];
+    private $configNeeded = [];
+
     /**
      * @return int sort number in admin menu
      */
@@ -45,10 +49,6 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
     {
         return true;
     }
-
-    private $orgs = array();
-    private $authNeeded = array();
-    private $configNeeded = array();
 
     /**
      * Should carry out any processing required by the plugin.
@@ -88,9 +88,9 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
         $activeServices = array_keys($this->orgs);
         $html = "<div id='plugin__issuelinks_repoadmin'>";
         $html .= "<div><ul class='tabs'>";
-        $html = array_reduce($activeServices, array($this, 'appendServiceTab'), $html);
+        $html = array_reduce($activeServices, [$this, 'appendServiceTab'], $html);
         $html .= '</ul></div>';
-        $html = array_reduce($activeServices, array($this, 'appendServicePage'), $html);
+        $html = array_reduce($activeServices, [$this, 'appendServicePage'], $html);
 
         $html .= '</div>'; // <div id='plugin__issuelinks_repoadmin'>
 
@@ -143,14 +143,14 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
         } elseif (count($this->orgs[$serviceID]) === 0) {
             $html .= '<p>No organisations available for ' . $serviceName . '</p>';
         } else {
-            $form = new \dokuwiki\Form\Form(array('data-service' => $serviceID));
+            $form = new \dokuwiki\Form\Form(['data-service' => $serviceID]);
             $form->addFieldsetOpen($this->getLang('legend:user'));
             $form->addTagOpen('p');
             $form->addHTML('Authorized with user ' . $service->getUserString() . '. To change authorization please visit FIXME.');
             $form->addTagClose('p');
             $form->addFieldsetClose();
             $form->addFieldsetOpen($this->getLang("legend:group $serviceID"));
-            $form->addDropdown('mm_organisation', array_merge(array(''), $this->orgs[$serviceID]),
+            $form->addDropdown('mm_organisation', array_merge([''], $this->orgs[$serviceID]),
                 $this->getLang("label $serviceID:choose organisation"));
             $form->addFieldsetClose();
             $html .= $form->toHTML();

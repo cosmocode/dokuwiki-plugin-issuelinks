@@ -286,13 +286,13 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
             $issue = Issue::getInstance($pmServiceName, $projectKey, $issueId, $isMergeRequest);
             $issue->getFromDB();
         } catch (Exception $e) {
-            return array(400, $e->getMessage());
+            return [400, $e->getMessage()];
         }
         if (!$issue->isValid()) {
-            return array(404, '');
+            return [404, ''];
         }
 
-        return array(200, $issue->buildTooltipHTML());
+        return [200, $issue->buildTooltipHTML()];
     }
 
     private function getAdditionalIssueData($pmServiceName, $projectKey, $issueId, $isMergeRequest)
@@ -300,13 +300,13 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
         try {
             $issue = Issue::getInstance($pmServiceName, $projectKey, $issueId, $isMergeRequest);
         } catch (Exception $e) {
-            return array(400, $e->getMessage());
+            return [400, $e->getMessage()];
         }
         if (!$issue->isValid()) {
-            return array(404, '');
+            return [404, ''];
         }
 
-        return array(200, $issue->getAdditionalDataHTML());
+        return [200, $issue->getAdditionalDataHTML()];
     }
 
 }

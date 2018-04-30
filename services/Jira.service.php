@@ -45,20 +45,6 @@ class Jira extends AbstractService
     }
 
     /**
-     * Get the url to the given issue at the given project
-     *
-     * @param      $projectId
-     * @param      $issueId
-     * @param bool $isMergeRequest ignored, GitHub routes the requests correctly by itself
-     *
-     * @return string
-     */
-    public function getIssueURL($projectId, $issueId, $isMergeRequest)
-    {
-        return $this->jiraUrl . '/browse/' . $projectId . '-' . $issueId;
-    }
-
-    /**
      * Decide whether the provided issue is valid
      *
      * @param Issue $issue
@@ -86,6 +72,27 @@ class Jira extends AbstractService
     public static function getProjectIssueSeparator($isMergeRequest)
     {
         return '-';
+    }
+
+    public static function isOurWebhook()
+    {
+        global $INPUT;
+        $userAgent = $INPUT->server->str('HTTP_USER_AGENT');
+        return strpos($userAgent, 'Atlassian HttpClient') === 0;
+    }
+
+    /**
+     * Get the url to the given issue at the given project
+     *
+     * @param      $projectId
+     * @param      $issueId
+     * @param bool $isMergeRequest ignored, GitHub routes the requests correctly by itself
+     *
+     * @return string
+     */
+    public function getIssueURL($projectId, $issueId, $isMergeRequest)
+    {
+        return $this->jiraUrl . '/browse/' . $projectId . '-' . $issueId;
     }
 
     /**
@@ -136,6 +143,32 @@ class Jira extends AbstractService
         }
 
         return true;
+    }
+
+    protected function makeJiraRequest($endpoint, array $data, $method, array $headers = [])
+    {
+        $url = $this->jiraUrl . $endpoint;
+        $dataToBeSend = json_encode($data);
+        $defaultHeaders = [
+            'Authorization' => 'Basic ' . base64_encode("$this->authUser:$this->token"),
+            'Content-Type' => 'application/json',
+        ];
+
+        $this->dokuHTTPClient->headers = array_merge($this->dokuHTTPClient->headers, $defaultHeaders, $headers);
+
+        try {
+            $responseSuccess = $this->dokuHTTPClient->sendRequest($url, $dataToBeSend, $method);
+        } catch (\HTTPClientException $e) {
+            throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
+        }
+
+        if (!$responseSuccess || $this->dokuHTTPClient->status < 200 || $this->dokuHTTPClient->status > 206) {
+            if ($this->dokuHTTPClient->status >= 500) {
+                throw new ExternalServerException('request error', $this->dokuHTTPClient, $url, $method);
+            }
+            throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
+        }
+        return json_decode($this->dokuHTTPClient->resp_body, true);
     }
 
     /**
@@ -206,22 +239,50 @@ class Jira extends AbstractService
         $this->setIssueData($issue, $issueData);
     }
 
+    protected function setIssueData(Issue $issue, $issueData)
+    {
+        $issue->setSummary($issueData['fields']['summary']);
+        $issue->setStatus($issueData['fields']['status']['name']);
+        $issue->setDescription($issueData['fields']['description']);
+        $issue->setType($issueData['fields']['issuetype']['name']);
+        $issue->setPriority($issueData['fields']['priority']['name']);
+
+        $issue->setUpdated($issueData['fields']['updated']);
+        $versions = array_column($issueData['fields']['fixVersions'], 'name');
+        $issue->setVersions($versions);
+        $components = array_column($issueData['fields']['components'], 'name');
+        $issue->setComponents($components);
+        $issue->setLabels($issueData['fields']['labels']);
+
+        if ($issueData['fields']['assignee']) {
+            $assignee = $issueData['fields']['assignee'];
+            $issue->setAssignee($assignee['displayName'], $assignee['avatarUrls']['48x48']);
+        }
+
+        if ($issueData['fields']['duedate']) {
+            $issue->setDuedate($issueData['fields']['duedate']);
+        }
+
+        // FIXME: check and handle these fields:
+//        $issue->setParent($issueData['fields']['parent']['key']);
+    }
+
     public function retrieveAllIssues($projectKey, &$startat = 0)
     {
         $jqlQuery = "project=$projectKey";
 //        $jqlQuery = urlencode("project=$projectKey ORDER BY updated DESC");
-        $endpoint = '/rest/api/2/search?jql=' . $jqlQuery. '&maxResults=50&startAt=' . $startat;
+        $endpoint = '/rest/api/2/search?jql=' . $jqlQuery . '&maxResults=50&startAt=' . $startat;
         $result = $this->makeJiraRequest($endpoint, [], 'GET');
 
         if (empty($result['issues'])) {
-            return array();
+            return [];
         }
 
         $this->total = $result['total'];
 
         $startat += $result['maxResults'];
 
-        $retrievedIssues = array();
+        $retrievedIssues = [];
         foreach ($result['issues'] as $issueData) {
             list(, $issueNumber) = explode('-', $issueData['key']);
             try {
@@ -322,7 +383,7 @@ class Jira extends AbstractService
             ],
             'description' => 'dokuwiki plugin issuelinks for Wiki: ' . $conf['title'],
             'jqlFilter' => "project in ($projectsString)",
-            'excludeIssueDetails' => 'false'
+            'excludeIssueDetails' => 'false',
         ];
         $response = $this->makeJiraRequest('/rest/webhooks/1.0/webhook', $payload, 'POST');
         $selfLink = $response['self'];
@@ -379,7 +440,7 @@ class Jira extends AbstractService
             ],
             'description' => 'dokuwiki plugin issuelinks for Wiki: ' . $conf['title'],
             'jqlFilter' => "project in ($projectsString)",
-            'excludeIssueDetails' => 'false'
+            'excludeIssueDetails' => 'false',
         ];
         $response = $this->makeJiraRequest('/rest/webhooks/1.0/webhook', $payload, 'POST');
         $selfLink = $response['self'];
@@ -389,13 +450,6 @@ class Jira extends AbstractService
         $db->saveWebhook('jira', $projectsString, $newWebhookID, 'jira rest webhooks have no secrets :/');
 
         return ['status' => 204, 'data' => ''];
-    }
-
-    public static function isOurWebhook()
-    {
-        global $INPUT;
-        $userAgent = $INPUT->server->str('HTTP_USER_AGENT');
-        return strpos($userAgent, 'Atlassian HttpClient') === 0;
     }
 
     /**
@@ -424,7 +478,7 @@ class Jira extends AbstractService
         list($projectKey, $issueId) = explode('-', $data['issue']['key']);
 
         if (!in_array($projectKey, $projects)) {
-            return new RequestResult(202,'Project ' . $projectKey . ' is not handled by this wiki.');
+            return new RequestResult(202, 'Project ' . $projectKey . ' is not handled by this wiki.');
         }
 
         return true;
@@ -442,64 +496,11 @@ class Jira extends AbstractService
         $data = json_decode($webhookBody, true);
         $issueData = $data['issue'];
         list($projectKey, $issueId) = explode('-', $issueData['key']);
-        $issue =Issue::getInstance('jira', $projectKey, $issueId, false);
+        $issue = Issue::getInstance('jira', $projectKey, $issueId, false);
         $this->setIssueData($issue, $issueData);
         $issue->saveToDB();
 
         return new RequestResult(200, 'OK');
-    }
-
-    protected function setIssueData(Issue $issue, $issueData)
-    {
-        $issue->setSummary($issueData['fields']['summary']);
-        $issue->setStatus($issueData['fields']['status']['name']);
-        $issue->setDescription($issueData['fields']['description']);
-        $issue->setType($issueData['fields']['issuetype']['name']);
-        $issue->setPriority($issueData['fields']['priority']['name']);
-
-        $issue->setUpdated($issueData['fields']['updated']);
-        $versions = array_column($issueData['fields']['fixVersions'], 'name');
-        $issue->setVersions($versions);
-        $components = array_column($issueData['fields']['components'], 'name');
-        $issue->setComponents($components);
-        $issue->setLabels($issueData['fields']['labels']);
-
-        if ($issueData['fields']['assignee']) {
-            $assignee = $issueData['fields']['assignee'];
-            $issue->setAssignee($assignee['displayName'], $assignee['avatarUrls']['48x48']);
-        }
-
-        if ($issueData['fields']['duedate']) {
-            $issue->setDuedate($issueData['fields']['duedate']);
-        }
-
-        // FIXME: check and handle these fields:
-//        $issue->setParent($issueData['fields']['parent']['key']);
-    }
-
-    protected function makeJiraRequest($endpoint, array $data, $method, array $headers = array()) {
-        $url = $this->jiraUrl . $endpoint;
-        $dataToBeSend = json_encode($data);
-        $defaultHeaders = [
-            'Authorization' => 'Basic ' . base64_encode("$this->authUser:$this->token"),
-            'Content-Type' => 'application/json',
-        ];
-
-        $this->dokuHTTPClient->headers = array_merge($this->dokuHTTPClient->headers, $defaultHeaders, $headers);
-
-        try {
-            $responseSuccess = $this->dokuHTTPClient->sendRequest($url, $dataToBeSend, $method);
-        } catch (\HTTPClientException $e) {
-            throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
-        }
-
-        if (!$responseSuccess || $this->dokuHTTPClient->status < 200 || $this->dokuHTTPClient->status > 206) {
-            if ($this->dokuHTTPClient->status >= 500) {
-                throw new ExternalServerException('request error', $this->dokuHTTPClient, $url, $method);
-            }
-            throw new HTTPRequestException('request error', $this->dokuHTTPClient, $url, $method);
-        }
-        return json_decode($this->dokuHTTPClient->resp_body, true);
     }
 
 }

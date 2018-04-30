@@ -6,35 +6,33 @@ namespace dokuwiki\plugin\issuelinks\classes;
  *
  * Class Issue
  */
-class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
+class Issue extends \DokuWiki_Plugin implements \JsonSerializable
+{
 
+    /** @var Issue[] */
+    private static $instances = [];
     protected $issueId = null;
     protected $projectId = null;
     protected $isMergeRequest = null;
-    protected $files = array();
-
+    protected $files = [];
+    protected $serviceID = '';
     private $summary = '';
     private $description = '';
     private $status = '';
     private $type = '';
-    private $components = array();
-    private $labels = array();
+    private $components = [];
+    private $labels = [];
     private $priority = '';
-    private $assignee = array();
-    private $labelData = array();
-    private $versions = array();
+    private $assignee = [];
+    private $labelData = [];
+    private $versions = [];
     private $duedate = null;
     private $updated = null;
     /** @var int may be set if this issue is created in specific relation to another issue */
     private $relatedWeight = 0;
     private $parent;
-    private $errors = array();
+    private $errors = [];
     private $isValid = null;
-
-    protected $serviceID = '';
-
-    /** @var Issue[]  */
-    private static $instances = array();
 
     /**
      * @param        $serviceName
@@ -43,7 +41,8 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
      *
      * @param        $isMergeRequest
      */
-    private function __construct($serviceName, $projectKey, $issueId, $isMergeRequest) {
+    private function __construct($serviceName, $projectKey, $issueId, $isMergeRequest)
+    {
         if (empty($serviceName) || empty($projectKey) || empty($issueId) || !is_numeric($issueId)) {
             throw new \InvalidArgumentException('Empty value passed to Issue constructor');
         }
@@ -67,25 +66,25 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
      *
      * @return Issue
      */
-    public static function getInstance($serviceName, $projectKey, $issueId, $isMergeRequest = false, $forcereload = false) {
-        $issueHash = $serviceName.$projectKey.$issueId.'!'.$isMergeRequest;
-        if(empty(self::$instances[$issueHash]) || $forcereload) {
+    public static function getInstance(
+        $serviceName,
+        $projectKey,
+        $issueId,
+        $isMergeRequest = false,
+        $forcereload = false
+    ) {
+        $issueHash = $serviceName . $projectKey . $issueId . '!' . $isMergeRequest;
+        if (empty(self::$instances[$issueHash]) || $forcereload) {
             self::$instances[$issueHash] = new Issue($serviceName, $projectKey, $issueId, $isMergeRequest);
         }
         return self::$instances[$issueHash];
     }
 
     /**
-     * @return string
-     */
-    public function getStatus() {
-        return $this->status;
-    }
-
-    /**
      * @return bool true if issue was found in database, false otherwise
      */
-    public function getFromDB() {
+    public function getFromDB()
+    {
         /** @var \helper_plugin_issuelinks_db $db */
         $db = plugin_load('helper', 'issuelinks_db');
         $issue = $db->loadIssue($this->serviceID, $this->projectId, $this->issueId, $this->isMergeRequest);
@@ -105,73 +104,28 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
         return true;
     }
 
-    public function getFromService() {
-        $serviceProvider = ServiceProvider::getInstance();
-        $service = $serviceProvider->getServices()[$this->serviceID]::getInstance();
-
-        try {
-            $service->retrieveIssue($this);
-            if ($this->isValid(true)) {
-                $this->saveToDB();
-            }
-        } catch (IssueLinksException $e) {
-            $this->errors[] = $e;
-            $this->isValid = false;
-            return false;
-        }
-        return true;
-    }
-
-    public function saveToDB() {
-        /** @var \helper_plugin_issuelinks_db $db */
-        $db = plugin_load('helper', 'issuelinks_db');
-        return $db->saveIssue($this);
-    }
-
-    public function __toString() {
+    public function __toString()
+    {
         $sep = $this->pmService->getProjectIssueSeparator($this->isMergeRequest);
-        return $this->projectId . $sep .$this->issueId;
+        return $this->projectId . $sep . $this->issueId;
     }
 
     /**
      * @return \Exception|null
      */
-    public function getLastError() {
+    public function getLastError()
+    {
         if (!end($this->errors)) {
             return null;
         }
         return end($this->errors);
     }
 
-    public function getSummary() {
-        return $this->summary;
-    }
-
-    /**
-     * Returns the key, i.e. number, of the issue
-     *
-     * @param bool $annotateMergeRequest If true, prepends a `!` to the key of a merge requests
-     *
-     * @return int|string
-     */
-    public function getKey($annotateMergeRequest = false) {
-        if ($annotateMergeRequest && $this->isMergeRequest) {
-            return '!' . $this->issueId;
-        }
-        return $this->issueId;
-    }
-
-    /**
-     * @return string
-     */
-    public function getProject() {
-        return $this->projectId;
-    }
-
     /**
      * @return bool|self
      */
-    public function isMergeRequest($isMergeRequest = null) {
+    public function isMergeRequest($isMergeRequest = null)
+    {
         if ($isMergeRequest === null) {
             return $this->isMergeRequest;
         }
@@ -181,51 +135,346 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
     }
 
     /**
-     * @return null
+     * Specify data which should be serialized to JSON
+     *
+     * @link  http://php.net/manual/en/jsonserializable.jsonserialize.php
+     * @return mixed data which can be serialized by <b>json_encode</b>,
+     * which is a value of any type other than a resource.
+     * @since 5.4.0
+     *
+     * @link  http://stackoverflow.com/a/4697671/3293343
      */
-    public function getDuedate() {
-        return $this->duedate;
-    }
-
-    /**
-     * @return array
-     */
-    public function getComponents() {
-        return $this->components;
-    }
-
-    /**
-     * @return null
-     */
-    public function getUpdated() {
-        return $this->updated;
-    }
-
-    /**
-     * @return array
-     */
-    public function getVersions() {
-        return $this->versions;
-    }
-
-    /**
-     * @return array
-     */
-    public function getLabels() {
-        return $this->labels;
+    public function jsonSerialize()
+    {
+        return [
+            'service' => $this->serviceID,
+            'project' => $this->getProject(),
+            'id' => $this->getKey(),
+            'isMergeRequest' => $this->isMergeRequest ? '1' : '0',
+            'summary' => $this->getSummary(),
+            'description' => $this->getDescription(),
+            'type' => $this->getType(),
+            'status' => $this->getStatus(),
+            'parent' => $this->getParent(),
+            'components' => $this->getComponents(),
+            'labels' => $this->getLabels(),
+            'priority' => $this->getPriority(),
+            'duedate' => $this->getDuedate(),
+            'versions' => $this->getVersions(),
+            'updated' => $this->getUpdated(),
+        ];
     }
 
     /**
      * @return string
      */
-    public function getType() {
+    public function getProject()
+    {
+        return $this->projectId;
+    }
+
+    /**
+     * Returns the key, i.e. number, of the issue
+     *
+     * @param bool $annotateMergeRequest If true, prepends a `!` to the key of a merge requests
+     *
+     * @return int|string
+     */
+    public function getKey($annotateMergeRequest = false)
+    {
+        if ($annotateMergeRequest && $this->isMergeRequest) {
+            return '!' . $this->issueId;
+        }
+        return $this->issueId;
+    }
+
+    public function getSummary()
+    {
+        return $this->summary;
+    }
+
+    /**
+     * @param string $summary
+     *
+     * @return Issue
+     *
+     * todo: decide if we should test for non-empty string here
+     */
+    public function setSummary($summary)
+    {
+        $this->summary = $summary;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDescription()
+    {
+        return $this->description;
+    }
+
+    /**
+     * @param string $description
+     *
+     * @return Issue
+     */
+    public function setDescription($description)
+    {
+        $this->description = $description;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getType()
+    {
         return $this->type;
     }
 
     /**
+     * @param string $type
+     *
+     * @return Issue
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+        return $this;
+    }
+
+    /**
      * @return string
      */
-    public function getTypeHTML() {
+    public function getStatus()
+    {
+        return $this->status;
+    }
+
+    /**
+     * @param string $status
+     *
+     * @return Issue
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getParent()
+    {
+        return $this->parent;
+    }
+
+    public function setParent($key)
+    {
+        $this->parent = $key;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getComponents()
+    {
+        return $this->components;
+    }
+
+    /**
+     * @param array $components
+     *
+     * @return Issue
+     */
+    public function setComponents($components)
+    {
+        if (!is_array($components)) {
+            $components = array_filter(array_map('trim', explode(',', $components)));
+        }
+        if (!empty($components[0]['name'])) {
+            $components = array_map(function ($component) {
+                return $component['name'];
+            }, $components);
+        }
+        $this->components = $components;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getLabels()
+    {
+        return $this->labels;
+    }
+
+    /**
+     * @param array $labels
+     *
+     * @return Issue
+     */
+    public function setLabels($labels)
+    {
+        if (!is_array($labels)) {
+            $labels = array_filter(array_map('trim', explode(',', $labels)));
+        }
+        $this->labels = $labels;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPriority()
+    {
+        return $this->priority;
+    }
+
+    /**
+     * @param string $priority
+     *
+     * @return Issue
+     */
+    public function setPriority($priority)
+    {
+        $this->priority = $priority;
+        return $this;
+    }
+
+    /**
+     * @return null
+     */
+    public function getDuedate()
+    {
+        return $this->duedate;
+    }
+
+    /**
+     * @param null $duedate
+     *
+     * @return Issue
+     */
+    public function setDuedate($duedate)
+    {
+        $this->duedate = $duedate;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getVersions()
+    {
+        return $this->versions;
+    }
+
+    /**
+     * @param array $versions
+     *
+     * @return Issue
+     */
+    public function setVersions($versions)
+    {
+        if (!is_array($versions)) {
+            $versions = array_map('trim', explode(',', $versions));
+        }
+        if (!empty($versions[0]['name'])) {
+            $versions = array_map(function ($version) {
+                return $version['name'];
+            }, $versions);
+        }
+        $this->versions = $versions;
+        return $this;
+    }
+
+    /**
+     * @return null
+     */
+    public function getUpdated()
+    {
+        return $this->updated;
+    }
+
+    /**
+     * @param string|int $updated
+     *
+     * @return Issue
+     */
+    public function setUpdated($updated)
+    {
+        /** @var \helper_plugin_issuelinks_util $util */
+        $util = plugin_load('helper', 'issuelinks_util');
+        if (!$util->isValidTimeStamp($updated)) {
+            $updated = strtotime($updated);
+        }
+        $this->updated = (int)$updated;
+        return $this;
+    }
+
+    /**
+     * Get a fancy HTML-link to issue
+     *
+     * @param bool $addSummary add the issue's summary after it status
+     *
+     * @return string
+     */
+    public function getIssueLinkHTML($addSummary = false)
+    {
+        $serviceProvider = ServiceProvider::getInstance();
+        $service = $serviceProvider->getServices()[$this->serviceID];
+        $name = $this->projectId . $service::getProjectIssueSeparator($this->isMergeRequest) . $this->issueId;
+        $url = $this->getIssueURL();
+
+        $status = cleanID($this->getStatus());
+        if ($status) {
+            $name .= $this->getformattedIssueStatus();
+        }
+        if ($addSummary) {
+            $name .= ' ' . $this->getSummary();
+        }
+
+        $target = 'target="_blank" rel="noopener"';
+        $classes = 'issuelink ' . cleanID($this->getType()) . ($this->isMergeRequest ? ' mergerequest' : '');
+        $dataAttributes = "data-service=\"$this->serviceID\" data-project=\"$this->projectId\" data-issueid=\"$this->issueId\"";
+        $dataAttributes .= ' data-ismergerequest="' . ($this->isMergeRequest ? '1' : '0') . '"';
+        return "<a href=\"$url\" class=\"$classes\" $dataAttributes $target>" . $this->getTypeHTML() . "$name</a>";
+    }
+
+    /**
+     * @return string
+     */
+    public function getIssueURL()
+    {
+        $serviceProvider = ServiceProvider::getInstance();
+        $service = $serviceProvider->getServices()[$this->serviceID]::getInstance();
+        return $service->getIssueURL($this->projectId, $this->issueId, $this->isMergeRequest);
+    }
+
+    /**
+     * get the status of the issue as HTML string
+     *
+     * @param string|null $status
+     *
+     * @return string
+     */
+    public function getformattedIssueStatus($status = null)
+    {
+        if ($status === null) {
+            $status = $this->getStatus();
+        }
+        $status = strtolower($status);
+        return "<span class='mm__status " . cleanID($status) . "'>$status</span>";
+    }
+
+    /**
+     * @return string
+     */
+    public function getTypeHTML()
+    {
         if ($this->isMergeRequest) {
             return inlineSVG(__DIR__ . '/../images/mdi-source-pull.svg');
         }
@@ -238,7 +487,8 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
      *
      * @return string the path to the icon / base64 image if type unknown
      */
-    protected function getMaterialDesignTypeIcon() {
+    protected function getMaterialDesignTypeIcon()
+    {
         $fileName = DOKU_URL . '/lib/plugins/issuelinks/images/';
         switch (cleanID($this->type)) {
             case 'bug':
@@ -271,251 +521,14 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
         return $fileName;
     }
 
-    /**
-     * @return string
-     */
-    public function getDescription() {
-        return $this->description;
-    }
-
-    /**
-     * @param array $components
-     * @return Issue
-     */
-    public function setComponents($components) {
-        if (!is_array($components)) {
-            $components = array_filter(array_map('trim', explode(',',$components)));
-        }
-        if (!empty($components[0]['name'])) {
-            $components = array_map(function($component){return $component['name'];},$components);
-        }
-        $this->components = $components;
-        return $this;
-    }
-
-    /**
-     * @param array $labels
-     * @return Issue
-     */
-    public function setLabels($labels) {
-        if (!is_array($labels)) {
-            $labels = array_filter(array_map('trim', explode(',',$labels)));
-        }
-        $this->labels = $labels;
-        return $this;
-    }
-
-    /**
-     * @param array $versions
-     * @return Issue
-     */
-    public function setVersions($versions) {
-        if (!is_array($versions)) {
-            $versions = array_map('trim', explode(',',$versions));
-        }
-        if (!empty($versions[0]['name'])) {
-            $versions = array_map(function($version){return $version['name'];},$versions);
-        }
-        $this->versions = $versions;
-        return $this;
-    }
-
-    /**
-     * @param string|int $updated
-     * @return Issue
-     */
-    public function setUpdated($updated) {
-        /** @var \helper_plugin_issuelinks_util $util */
-        $util = plugin_load('helper', 'issuelinks_util');
-        if (!$util->isValidTimeStamp($updated)) {
-            $updated = strtotime($updated);
-        }
-        $this->updated = (int)$updated;
-        return $this;
-    }
-
-    /**
-     * @param string $summary
-     * @return Issue
-     *
-     * todo: decide if we should test for non-empty string here
-     */
-    public function setSummary($summary) {
-        $this->summary = $summary;
-        return $this;
-    }
-
-    /**
-     * @param string $status
-     * @return Issue
-     */
-    public function setStatus($status) {
-        $this->status = $status;
-        return $this;
-    }
-
-    /**
-     * @param string $type
-     * @return Issue
-     */
-    public function setType($type) {
-        $this->type = $type;
-        return $this;
-    }
-
-    /**
-     * @param string $description
-     * @return Issue
-     */
-    public function setDescription($description) {
-        $this->description = $description;
-        return $this;
-    }
-
-    /**
-     * @param string $priority
-     * @return Issue
-     */
-    public function setPriority($priority) {
-        $this->priority = $priority;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPriority() {
-        return $this->priority;
-    }
-
-    /**
-     * @param null $duedate
-     * @return Issue
-     */
-    public function setDuedate($duedate) {
-        $this->duedate = $duedate;
-        return $this;
-    }
-
-    public function setParent($key) {
-        $this->parent = $key;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getParent() {
-        return $this->parent;
-    }
-
-    /**
-     * Specify data which should be serialized to JSON
-     * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
-     * @return mixed data which can be serialized by <b>json_encode</b>,
-     * which is a value of any type other than a resource.
-     * @since 5.4.0
-     *
-     * @link http://stackoverflow.com/a/4697671/3293343
-     */
-    public function jsonSerialize() {
-        return array(
-            'service' => $this->serviceID,
-            'project' => $this->getProject(),
-            'id' => $this->getKey(),
-            'isMergeRequest' => $this->isMergeRequest ? '1' : '0',
-            'summary' => $this->getSummary(),
-            'description' => $this->getDescription(),
-            'type' => $this->getType(),
-            'status' => $this->getStatus(),
-            'parent' => $this->getParent(),
-            'components' => $this->getComponents(),
-            'labels' => $this->getLabels(),
-            'priority' => $this->getPriority(),
-            'duedate' => $this->getDuedate(),
-            'versions' => $this->getVersions(),
-            'updated' => $this->getUpdated()
-        );
-    }
-
-    public function getServiceName() {
-        return $this->serviceID;
-    }
-
-    /**
-     * Check if an issue is valid.
-     *
-     * The specific rules depend on the service and the cached value may also be set by other functions.
-     *
-     * @param bool $recheck force a validity check instead of using cached value if available
-     * @return bool
-     */
-    public function isValid($recheck = false) {
-        if ($recheck || $this->isValid === null) {
-            $serviceProvider = ServiceProvider::getInstance();
-            $service = $serviceProvider->getServices()[$this->serviceID];
-            $this->isValid = $service::isIssueValid($this);
-        }
-        return $this->isValid;
-    }
-
-    /**
-     * get the status of the issue as HTML string
-     *
-     * @param string|null $status
-     *
-     * @return string
-     */
-    public function getformattedIssueStatus($status = null) {
-        if ($status === null) {
-            $status = $this->getStatus();
-        }
-        $status = strtolower($status);
-        return "<span class='mm__status " . cleanID($status) . "'>$status</span>";
-    }
-
-    /**
-     * Get a fancy HTML-link to issue
-     *
-     * @param bool $addSummary add the issue's summary after it status
-     * @return string
-     */
-    public function getIssueLinkHTML($addSummary = false) {
-        $serviceProvider = ServiceProvider::getInstance();
-        $service = $serviceProvider->getServices()[$this->serviceID];
-        $name = $this->projectId . $service::getProjectIssueSeparator($this->isMergeRequest) . $this->issueId;
-        $url = $this->getIssueURL();
-
-        $status = cleanID($this->getStatus());
-        if ($status) {
-            $name .= $this->getformattedIssueStatus();
-        }
-        if ($addSummary) {
-            $name .= ' ' . $this->getSummary();
-        }
-
-        $target = 'target="_blank" rel="noopener"';
-        $classes = 'issuelink ' . cleanID($this->getType()) . ($this->isMergeRequest ? ' mergerequest' : '');
-        $dataAttributes = "data-service=\"$this->serviceID\" data-project=\"$this->projectId\" data-issueid=\"$this->issueId\"";
-        $dataAttributes .= ' data-ismergerequest="' . ($this->isMergeRequest ? '1' : '0') . '"';
-        return "<a href=\"$url\" class=\"$classes\" $dataAttributes $target>" . $this->getTypeHTML() . "$name</a>";
-    }
-
-    /**
-     * @return string
-     */
-    public function getIssueURL() {
-        $serviceProvider = ServiceProvider::getInstance();
-        $service = $serviceProvider->getServices()[$this->serviceID]::getInstance();
-        return $service->getIssueURL($this->projectId, $this->issueId, $this->isMergeRequest);
-    }
-
-    public function setAssignee($name, $avatar_url) {
+    public function setAssignee($name, $avatar_url)
+    {
         $this->assignee['name'] = $name;
         $this->assignee['avatarURL'] = $avatar_url;
     }
 
-    public function getAdditionalDataHTML() {
+    public function getAdditionalDataHTML()
+    {
         $this->getFromService();
         $data = [];
         if (!empty($this->assignee)) {
@@ -538,7 +551,52 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
         return $data;
     }
 
-    public function buildTooltipHTML() {
+    public function getFromService()
+    {
+        $serviceProvider = ServiceProvider::getInstance();
+        $service = $serviceProvider->getServices()[$this->serviceID]::getInstance();
+
+        try {
+            $service->retrieveIssue($this);
+            if ($this->isValid(true)) {
+                $this->saveToDB();
+            }
+        } catch (IssueLinksException $e) {
+            $this->errors[] = $e;
+            $this->isValid = false;
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Check if an issue is valid.
+     *
+     * The specific rules depend on the service and the cached value may also be set by other functions.
+     *
+     * @param bool $recheck force a validity check instead of using cached value if available
+     *
+     * @return bool
+     */
+    public function isValid($recheck = false)
+    {
+        if ($recheck || $this->isValid === null) {
+            $serviceProvider = ServiceProvider::getInstance();
+            $service = $serviceProvider->getServices()[$this->serviceID];
+            $this->isValid = $service::isIssueValid($this);
+        }
+        return $this->isValid;
+    }
+
+    public function saveToDB()
+    {
+        /** @var \helper_plugin_issuelinks_db $db */
+        $db = plugin_load('helper', 'issuelinks_db');
+        return $db->saveIssue($this);
+    }
+
+    public function buildTooltipHTML()
+    {
         $html = '<aside class="issueTooltip">';
         $html .= "<h1 class=\"issueTitle\">{$this->getSummary()}</h1>";
         $html .= "<div class='assigneeAvatar waiting'></div>";
@@ -582,7 +640,8 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
 
         if (!$this->isMergeRequest) {
             // show merge requests referencing this Issues
-            $mrs = $data->getMergeRequestsForIssue($this->getServiceName(), $this->getProject(), $this->issueId, $this->isMergeRequest);
+            $mrs = $data->getMergeRequestsForIssue($this->getServiceName(), $this->getProject(), $this->issueId,
+                $this->isMergeRequest);
             if (!empty($mrs)) {
                 $html .= '<div class="mergeRequests">';
                 $html .= '<h2>Merge Requests</h2>';
@@ -598,7 +657,8 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
             }
         }
 
-        $linkingPages = $data->getLinkingPages($this->getServiceName(), $this->getProject(), $this->issueId, $this->isMergeRequest);
+        $linkingPages = $data->getLinkingPages($this->getServiceName(), $this->getProject(), $this->issueId,
+            $this->isMergeRequest);
         if (count($linkingPages)) {
             $html .= '<div class="relatedPages📄">';
             $html .= '<h2>' . $util->getLang('linking pages') . '</h2>';
@@ -616,15 +676,21 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
         return $html;
     }
 
+    public function getServiceName()
+    {
+        return $this->serviceID;
+    }
+
     /**
      * @param string $labelName the background color without the leading #
      * @param string $color
      */
-    public function setLabelData($labelName, $color) {
-        $this->labelData[$labelName] = array(
+    public function setLabelData($labelName, $color)
+    {
+        $this->labelData[$labelName] = [
             'background-color' => $color,
-            'color' => $this->calculateColor($color)
-        );
+            'color' => $this->calculateColor($color),
+        ];
     }
 
     /**
@@ -637,18 +703,19 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable {
      *
      * @return string
      */
-    private function calculateColor($color) {
+    private function calculateColor($color)
+    {
         /** @noinspection PrintfScanfArgumentsInspection */
-        list($r, $g, $b) = array_map(function($color8bit){
-            $c = $color8bit/255;
+        list($r, $g, $b) = array_map(function ($color8bit) {
+            $c = $color8bit / 255;
             if ($c <= 0.03928) {
-                $cl = $c/12.92;
+                $cl = $c / 12.92;
             } else {
-                $cl = pow(($c+0.055)/1.055,2.4);
+                $cl = pow(($c + 0.055) / 1.055, 2.4);
             }
             return $cl;
         }, sscanf($color, "%02x%02x%02x"));
-        if ($r*0.2126 + $g*0.7152 + $b*0.0722 > 0.179) {
+        if ($r * 0.2126 + $g * 0.7152 + $b * 0.0722 > 0.179) {
             return '#000000';
         }
         return '#FFFFFF';

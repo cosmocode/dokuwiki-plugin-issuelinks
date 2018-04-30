@@ -66,6 +66,7 @@ window.addTooltip = function addTooltip(selectorOr$element, url, dataOrDataFunct
         }, DELAY);
         $element.data('timeOutReference', timeOutReference);
     }
+
     function hoverEnd() {
         var $this = jQuery(this);
         $this.removeClass('hover');

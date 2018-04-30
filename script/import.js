@@ -17,13 +17,13 @@ window.magicMatcherUtil.abortImport = function abortImport($button, action) {
             'magicmatcher-action': action,
             sectok: sectok,
         }).done(function hideAbortForm(response) {
-            window.magicMatcherUtil.showAjaxMessages(response);
-            $form.hide();
-            $msgArea.prepend(jQuery('<div class="info">The import has been successfully aborted.</div>'));
-        }).fail(function reportFailure(jqXHR, textStatus, errorThrown) {
-            window.magicMatcherUtil.showAjaxMessages(jqXHR.responseJSON);
-            $msgArea.prepend(jQuery('<div class="error">There was an error aborting the import: ' + errorThrown + ' ' + textStatus + '</div>'));
-        });
+        window.magicMatcherUtil.showAjaxMessages(response);
+        $form.hide();
+        $msgArea.prepend(jQuery('<div class="info">The import has been successfully aborted.</div>'));
+    }).fail(function reportFailure(jqXHR, textStatus, errorThrown) {
+        window.magicMatcherUtil.showAjaxMessages(jqXHR.responseJSON);
+        $msgArea.prepend(jQuery('<div class="error">There was an error aborting the import: ' + errorThrown + ' ' + textStatus + '</div>'));
+    });
 };
 
 jQuery(document).on('click', '#issueImportAbort, #commitImportAbort', function triggerAbortingImport(event) {

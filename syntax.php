@@ -16,21 +16,24 @@ use dokuwiki\plugin\issuelinks\classes\Issue;
 use dokuwiki\plugin\issuelinks\services\ServiceInterface;
 
 
-class syntax_plugin_issuelinks extends DokuWiki_Syntax_Plugin {
+class syntax_plugin_issuelinks extends DokuWiki_Syntax_Plugin
+{
 
     protected $syntaxPatterns = [];
 
     /**
      * @return string Syntax mode type
      */
-    public function getType() {
+    public function getType()
+    {
         return 'substition';
     }
 
     /**
      * @return int Sort order - Low numbers go before high numbers
      */
-    public function getSort() {
+    public function getSort()
+    {
         return 50;
     }
 
@@ -39,7 +42,8 @@ class syntax_plugin_issuelinks extends DokuWiki_Syntax_Plugin {
      *
      * @param string $mode Parser mode
      */
-    public function connectTo($mode) {
+    public function connectTo($mode)
+    {
         $serviceProvider = dokuwiki\plugin\issuelinks\classes\ServiceProvider::getInstance();
         $this->syntaxPatterns = $serviceProvider->getSyntaxKeys();
 
@@ -52,51 +56,72 @@ class syntax_plugin_issuelinks extends DokuWiki_Syntax_Plugin {
     /**
      * Handle matches of the magicmatcher syntax
      *
-     * @param string $match The match of the syntax
-     * @param int $state The state of the handler
-     * @param int $pos The position in the document
+     * @param string       $match   The match of the syntax
+     * @param int          $state   The state of the handler
+     * @param int          $pos     The position in the document
      * @param Doku_Handler $handler The handler
      *
      * @return array Data for the renderer
      *
      * @throws Exception
      */
-    public function handle($match, $state, $pos, Doku_Handler $handler) {
-        list($pmServiceKey,$issueSyntax) = explode('>', trim($match,'[]'));
+    public function handle($match, $state, $pos, Doku_Handler $handler)
+    {
+        list($pmServiceKey, $issueSyntax) = explode('>', trim($match, '[]'));
 
         /** @var ServiceInterface $serviceClass */
         $serviceClass = $this->syntaxPatterns[$pmServiceKey]::getInstance();
 
         $issue = $serviceClass->parseIssueSyntax($issueSyntax);
 
-        if(null === $issue) {
+        if (null === $issue) {
             return [$pmServiceKey, $issueSyntax];
         }
 
         global $ID, $REV, $ACT;
         $isLatest = empty($REV);
         if (act_clean($ACT) === 'show' && $isLatest && page_exists($ID)) {
-            $this->saveLinkToDatabase($issue->getServiceName(), $issue->getProject(), $issue->getKey(), $issue->isMergeRequest());
+            $this->saveLinkToDatabase($issue->getServiceName(), $issue->getProject(), $issue->getKey(),
+                $issue->isMergeRequest());
         }
 
-        return array(
+        return [
             'service' => $issue->getServiceName(),
             'project' => $issue->getProject(),
             'issueId' => $issue->getKey(),
             'isMergeRequest' => $issue->isMergeRequest(),
-        );
+        ];
+    }
+
+    /**
+     * @param string $project
+     * @param int    $issue_id
+     *
+     * @throws InvalidArgumentException
+     */
+    private function saveLinkToDatabase($pmServiceName, $project, $issue_id, $isMergeRequest)
+    {
+        global $ID;
+        $currentRev = @filemtime(wikiFN($ID));
+
+        /** @var helper_plugin_issuelinks_db $db_helper */
+        $db_helper = $this->loadHelper('issuelinks_db');
+        $db_helper->deleteAllIssuePageRevisions($ID, $pmServiceName, $project, $issue_id, $isMergeRequest, 'link');
+        $db_helper->savePageRevIssues($ID, $currentRev, $pmServiceName, $project, $issue_id, $isMergeRequest, 'link');
     }
 
     /**
      * Render xhtml output or metadata
      *
-     * @param string $mode Renderer mode (supported modes: xhtml)
+     * @param string        $mode     Renderer mode (supported modes: xhtml)
      * @param Doku_Renderer $renderer The renderer
-     * @param array $data The data from the handler() function
+     * @param array         $data     The data from the handler() function
+     *
      * @return bool If rendering was successful.
      */
-    public function render($mode, Doku_Renderer $renderer, $data) {
-        if($mode !== 'xhtml' || count($data) === 2) {
+    public function render($mode, Doku_Renderer $renderer, $data)
+    {
+        if ($mode !== 'xhtml' || count($data) === 2) {
             $renderer->interwikilink(null, null, 'google.com', implode(' ', $data));
             return true;
         }
@@ -106,22 +131,6 @@ class syntax_plugin_issuelinks extends DokuWiki_Syntax_Plugin {
         $issue->getFromDB();
         $renderer->doc .= $issue->getIssueLinkHTML();
         return true;
-    }
-
-    /**
-     * @param string $project
-     * @param int    $issue_id
-     *
-     * @throws InvalidArgumentException
-     */
-    private function saveLinkToDatabase($pmServiceName, $project, $issue_id, $isMergeRequest) {
-        global $ID;
-        $currentRev = @filemtime(wikiFN($ID));
-
-        /** @var helper_plugin_issuelinks_db $db_helper */
-        $db_helper = $this->loadHelper('issuelinks_db');
-        $db_helper->deleteAllIssuePageRevisions($ID, $pmServiceName, $project, $issue_id, $isMergeRequest, 'link');
-        $db_helper->savePageRevIssues($ID, $currentRev, $pmServiceName, $project, $issue_id, $isMergeRequest, 'link');
     }
 
 }
