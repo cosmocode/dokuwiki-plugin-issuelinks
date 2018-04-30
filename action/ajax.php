@@ -299,6 +299,7 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
     {
         try {
             $issue = Issue::getInstance($pmServiceName, $projectKey, $issueId, $isMergeRequest);
+            $issue->getFromDB();
         } catch (Exception $e) {
             return [400, $e->getMessage()];
         }
