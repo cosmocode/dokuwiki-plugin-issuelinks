@@ -23,20 +23,17 @@ jQuery(function initializeTooltips() {
     function addTooltip(selectorOr$element, url, dataOrDataFunction, complete) {
         'use strict';
 
-        var serverEndpoint = url || window.DOKU_BASE + 'lib/exe/ajax.php';
-        var DELAY = 300;
-        var HOVER_DETECTION_DELAY = 100;
-        var TOOLTIP_PARENT_CLASS = 'hasTooltip';
+        const serverEndpoint = url || window.DOKU_BASE + 'lib/exe/ajax.php';
+        const DELAY = 300;
+        const HOVER_DETECTION_DELAY = 100;
+        const TOOLTIP_PARENT_CLASS = 'hasTooltip';
 
         function hoverStart() {
-            var timeOutReference;
-            var payload;
-            var $tooltipDiv;
-            var $element = jQuery(this);
+            const $element = jQuery(this);
             $element.addClass('hover');
             if ($element.hasClass(TOOLTIP_PARENT_CLASS)) {
                 if ($element.data('MMtooltipID')) {
-                    $tooltipDiv = jQuery('#' + $element.data('MMtooltipID'));
+                    const $tooltipDiv = jQuery('#' + $element.data('MMtooltipID'));
                     $tooltipDiv.show().position({
                         my: 'left top',
                         at: 'left bottom',
@@ -45,9 +42,9 @@ jQuery(function initializeTooltips() {
                 }
                 return;
             }
-            payload = typeof dataOrDataFunction === 'function' ? dataOrDataFunction($element) : dataOrDataFunction;
-            timeOutReference = setTimeout(function getToolTip() {
-                var $div = jQuery('<div class="serverToolTip">')
+            const payload = typeof dataOrDataFunction === 'function' ? dataOrDataFunction($element) : dataOrDataFunction;
+            const timeOutReference = setTimeout(function getToolTip() {
+                const $div = jQuery('<div class="serverToolTip">')
                     .uniqueId()
                     .mouseleave(function hideTooltip() {
                         $div.removeClass('hover');
@@ -82,12 +79,12 @@ jQuery(function initializeTooltips() {
         }
 
         function hoverEnd() {
-            var $this = jQuery(this);
+            const $this = jQuery(this);
             $this.removeClass('hover');
             clearTimeout($this.data('timeOutReference'));
             if ($this.data('MMtooltipID')) {
                 setTimeout(function conditionalHideTooltip() {
-                    var $tooltip = jQuery('#' + $this.data('MMtooltipID'));
+                    const $tooltip = jQuery('#' + $this.data('MMtooltipID'));
                     if (!$tooltip.hasClass('hover')) {
                         $tooltip.hide().attr('aria-hidden', 'true');
                     }
@@ -113,7 +110,7 @@ jQuery(function initializeTooltips() {
             'issuelinks-action': 'getAdditionalIssueData',
             sectok: jQuery('input[name=sectok]').val(),
         }).done(function updateIssueTooltip(response) {
-            var data = response.data;
+            const data = response.data;
             window.magicMatcherUtil.showAjaxMessages(response);
             $tooltip.find('.waiting').removeClass('waiting');
             if (typeof data.avatarHTML === 'string') {

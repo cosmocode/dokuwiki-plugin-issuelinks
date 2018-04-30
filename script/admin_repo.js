@@ -2,8 +2,8 @@ window.magicMatcherUtil = window.magicMatcherUtil || {};
 jQuery(function initializeRepoAdminInterface() {
     'use strict';
 
-    var $repoadmin = jQuery('#plugin__issuelinks_repoadmin');
-    var $tabs = $repoadmin.find('.tabs a');
+    const $repoadmin = jQuery('#plugin__issuelinks_repoadmin');
+    const $tabs = $repoadmin.find('.tabs a');
 
     function toggleHookIndicator(data, $this) {
         $this.toggleClass('active inactive');
@@ -19,12 +19,11 @@ jQuery(function initializeRepoAdminInterface() {
     }
 
     function showError(jqXHR, $this) {
-        var response;
-        var data;
-        var HTTP_STATUS_FORBIDDEN = 403;
+        let data;
+        const HTTP_STATUS_FORBIDDEN = 403;
         console.error(jqXHR);
         try {
-            response = JSON.parse(jqXHR.responseText);
+            const response = JSON.parse(jqXHR.responseText);
             window.magicMatcherUtil.showAjaxMessages(response);
             if (typeof response.data !== 'undefined') {
                 data = response.data;
@@ -46,14 +45,13 @@ jQuery(function initializeRepoAdminInterface() {
     }
 
     function requestHookToogle() {
-        var settings;
-        var $this = jQuery(this);
-        var servicename = $this.parents('.repo_area').data('service');
+        const $this = jQuery(this);
+        const servicename = $this.parents('.repo_area').data('service');
         if ($this.hasClass('pulse')) {
             return;
         }
 
-        settings = {
+        const settings = {
             url: DOKU_BASE + 'lib/exe/ajax.php',
             data: {
                 call: 'issuelinks_repo_admin_toggle',
@@ -66,7 +64,7 @@ jQuery(function initializeRepoAdminInterface() {
         };
         jQuery.post(settings)
             .done(function adjustHookDisplay(response) {
-                var data = response.data;
+                const data = response.data;
                 window.magicMatcherUtil.showAjaxMessages(response);
                 toggleHookIndicator(data, $this);
             })
@@ -83,8 +81,8 @@ jQuery(function initializeRepoAdminInterface() {
     $tabs.first().closest('li').addClass('active');
     $repoadmin.find('.service_wrapper').not('[data-service="' + $tabs.data('service') + '"]').hide();
     $tabs.click(function switchTab() {
-        var $this = jQuery(this);
-        var servicename = $this.data('service');
+        const $this = jQuery(this);
+        const servicename = $this.data('service');
         $tabs.closest('li').removeClass('active');
         $this.closest('li').addClass('active');
         $repoadmin.find('.service_wrapper[data-service="' + servicename + '"]').show();
@@ -92,15 +90,14 @@ jQuery(function initializeRepoAdminInterface() {
     });
 
     jQuery('select[name="mm_organisation"]').change(function organisationChanged() {
-        var settings;
-        var $this = jQuery(this);
-        var servicename = $this.closest('form').data('service');
-        var $reposDiv = jQuery('.repo_area[data-service="' + servicename + '"]');
+        const $this = jQuery(this);
+        const servicename = $this.closest('form').data('service');
+        const $reposDiv = jQuery('.repo_area[data-service="' + servicename + '"]');
         if (!$this.val()) {
             $reposDiv.html('');
             return;
         }
-        settings = {
+        const settings = {
             url: DOKU_BASE + 'lib/exe/ajax.php',
             data: {
                 call: 'issuelinks_repo_admin_getorg',
@@ -111,7 +108,7 @@ jQuery(function initializeRepoAdminInterface() {
         };
         jQuery.post(settings)
             .done(function updateReposForOrganisation(response) {
-                var data = response.data;
+                const data = response.data;
                 window.magicMatcherUtil.showAjaxMessages(response);
                 $reposDiv.html(data);
                 $reposDiv.find('span.repohookstatus:not(.forbidden)').click(requestHookToogle);
@@ -126,11 +123,10 @@ jQuery(function initializeRepoAdminInterface() {
         $reposDiv.html(jQuery('<span>').addClass('pulse').css('padding', '5px'));
         $this.prop('disabled', 'disabled');
     });
-    var CHECK_IMPORT_STATUS_TIMEOUT = 1000;
-    var checkImportStatusTimeoutID;
+    const CHECK_IMPORT_STATUS_TIMEOUT = 1000;
 
     function checkImportStatus(servicename, project, $importStatusElement) {
-        var checkImportSettings = {
+        const checkImportSettings = {
             url: DOKU_BASE + 'lib/exe/ajax.php',
             data: {
                 call: 'plugin_issuelinks',
@@ -141,18 +137,18 @@ jQuery(function initializeRepoAdminInterface() {
         };
         jQuery.post(checkImportSettings)
             .done(function (response) {
-                var data = response.data;
+                const data = response.data;
                 window.magicMatcherUtil.showAjaxMessages(response);
 
-                var total = '?';
-                var percent = '?';
-                var count = jQuery.isNumeric(data.count) ? data.count : 0;
+                let total = '?';
+                let percent = '?';
+                const count = jQuery.isNumeric(data.count) ? data.count : 0;
                 if (jQuery.isNumeric(data.total) && data.total > 0) {
                     total = data.total;
                     percent = Math.round(count / total * 100);
                 }
-                var statusText = LANG.plugins.issuelinks['status:' + data.status];
-                var progressText = '' + count + '/' + total + ' (' + percent + ' %) ' + statusText;
+                const statusText = LANG.plugins.issuelinks['status:' + data.status];
+                const progressText = '' + count + '/' + total + ' (' + percent + ' %) ' + statusText;
                 $importStatusElement
                     .text(progressText)
                     .css('background-color', '#ff9')
@@ -161,7 +157,7 @@ jQuery(function initializeRepoAdminInterface() {
                 if (data.status && data.status === 'done') {
                     return;
                 }
-                checkImportStatusTimeoutID = window.setTimeout(
+                window.setTimeout(
                     checkImportStatus,
                     CHECK_IMPORT_STATUS_TIMEOUT,
                     servicename,
@@ -177,11 +173,11 @@ jQuery(function initializeRepoAdminInterface() {
 
     $repoadmin.on('click', '.js-importIssues', function (event) {
         console.log('I ran!');
-        var $this = jQuery(this);
-        var servicename = $this.closest('[data-service]').data('service');
-        var project = $this.data('project');
+        const $this = jQuery(this);
+        const servicename = $this.closest('[data-service]').data('service');
+        const project = $this.data('project');
 
-        var settings = {
+        const settings = {
             url: DOKU_BASE + 'lib/exe/ajax.php',
             data: {
                 call: 'issuelinks_import_all_issues_async',
@@ -193,9 +189,9 @@ jQuery(function initializeRepoAdminInterface() {
         jQuery.post(settings)
             .done(function (response) {
                 window.magicMatcherUtil.showAjaxMessages(response);
-                var $importStatusElement = jQuery('<span class="js-importRunning importRunning">Import started</span>');
+                const $importStatusElement = jQuery('<span class="js-importRunning importRunning">Import started</span>');
                 $this.replaceWith($importStatusElement);
-                checkImportStatusTimeoutID = window.setTimeout(
+                window.setTimeout(
                     checkImportStatus,
                     CHECK_IMPORT_STATUS_TIMEOUT,
                     servicename,

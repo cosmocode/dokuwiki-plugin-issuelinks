@@ -3,8 +3,7 @@ window.magicMatcherUtil = window.magicMatcherUtil || {};
 window.magicMatcherUtil.showAjaxMessages = function showAjaxMessages(response) {
     'use strict';
 
-    var messages;
-    var $msgArea;
+    let $msgArea;
     if (jQuery('body.tpl_sprintdoc').length) {
         $msgArea = jQuery('#dokuwiki__content').find('.msg-area');
     } else {
@@ -14,7 +13,7 @@ window.magicMatcherUtil.showAjaxMessages = function showAjaxMessages(response) {
         $msgArea.prepend(jQuery('<div>').addClass('error').html(response));
         return;
     }
-    messages = response.msg;
+    const messages = response.msg;
     if (!messages) {
         return;
     }
