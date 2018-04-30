@@ -55,7 +55,7 @@ jQuery(function initializeTooltips() {
                     });
                 $element.addClass(TOOLTIP_PARENT_CLASS);
                 jQuery.get(serverEndpoint, payload).done(function injectTooltip(response) {
-                    window.magicMatcherUtil.showAjaxMessages(response);
+                    window.issuelinksUtil.showAjaxMessages(response);
                     $div.html(response.data);
                     $div.appendTo(jQuery('body'));
                     $div.show().position({
@@ -71,7 +71,7 @@ jQuery(function initializeTooltips() {
                         complete($element, $div);
                     }
                 }).fail(function handleFailedState(jqXHR) {
-                    window.magicMatcherUtil.showAjaxMessages(jqXHR.responseJSON);
+                    window.issuelinksUtil.showAjaxMessages(jqXHR.responseJSON);
                     $div.remove();
                 });
             }, DELAY);
@@ -111,7 +111,7 @@ jQuery(function initializeTooltips() {
             sectok: jQuery('input[name=sectok]').val(),
         }).done(function updateIssueTooltip(response) {
             const data = response.data;
-            window.magicMatcherUtil.showAjaxMessages(response);
+            window.issuelinksUtil.showAjaxMessages(response);
             $tooltip.find('.waiting').removeClass('waiting');
             if (typeof data.avatarHTML === 'string') {
                 $tooltip.find('.assigneeAvatar').html(data.avatarHTML);
@@ -120,7 +120,7 @@ jQuery(function initializeTooltips() {
                 $tooltip.find('.labels').html(data.fancyLabelsHTML);
             }
         }).fail(function handleFailedState(jqXHR) {
-            window.magicMatcherUtil.showAjaxMessages(jqXHR.responseJSON);
+            window.issuelinksUtil.showAjaxMessages(jqXHR.responseJSON);
         });
     });
 });

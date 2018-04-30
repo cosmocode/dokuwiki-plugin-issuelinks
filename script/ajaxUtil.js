@@ -1,6 +1,6 @@
-window.magicMatcherUtil = window.magicMatcherUtil || {};
+window.issuelinksUtil = window.issuelinksUtil || {};
 
-window.magicMatcherUtil.showAjaxMessages = function showAjaxMessages(response) {
+window.issuelinksUtil.showAjaxMessages = function showAjaxMessages(response) {
     'use strict';
 
     let $msgArea;
@@ -22,11 +22,11 @@ window.magicMatcherUtil.showAjaxMessages = function showAjaxMessages(response) {
     });
 };
 
-window.magicMatcherUtil.handleFailedAjax = function handleFailedAjax(jqXHR) {
+window.issuelinksUtil.handleFailedAjax = function handleFailedAjax(jqXHR) {
     'use strict';
 
-    var HIGHEST_OK_STATUS = 206;
-    window.magicMatcherUtil.showAjaxMessages(jqXHR.responseJSON);
+    const HIGHEST_OK_STATUS = 206;
+    window.issuelinksUtil.showAjaxMessages(jqXHR.responseJSON);
     if (jqXHR.status && jqXHR.status > HIGHEST_OK_STATUS) {
         console.error(jqXHR.status + ' ' + jqXHR.statusText);
     }

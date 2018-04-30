@@ -1,4 +1,4 @@
-window.magicMatcherUtil = window.magicMatcherUtil || {};
+window.issuelinksUtil = window.issuelinksUtil || {};
 jQuery(function initializeRepoAdminInterface() {
     'use strict';
 
@@ -24,7 +24,7 @@ jQuery(function initializeRepoAdminInterface() {
         console.error(jqXHR);
         try {
             const response = JSON.parse(jqXHR.responseText);
-            window.magicMatcherUtil.showAjaxMessages(response);
+            window.issuelinksUtil.showAjaxMessages(response);
             if (typeof response.data !== 'undefined') {
                 data = response.data;
             } else {
@@ -65,7 +65,7 @@ jQuery(function initializeRepoAdminInterface() {
         jQuery.post(settings)
             .done(function adjustHookDisplay(response) {
                 const data = response.data;
-                window.magicMatcherUtil.showAjaxMessages(response);
+                window.issuelinksUtil.showAjaxMessages(response);
                 toggleHookIndicator(data, $this);
             })
             .fail(function showErrorOnHook(jqXHR) {
@@ -109,7 +109,7 @@ jQuery(function initializeRepoAdminInterface() {
         jQuery.post(settings)
             .done(function updateReposForOrganisation(response) {
                 const data = response.data;
-                window.magicMatcherUtil.showAjaxMessages(response);
+                window.issuelinksUtil.showAjaxMessages(response);
                 $reposDiv.html(data);
                 $reposDiv.find('span.repohookstatus:not(.forbidden)').click(requestHookToogle);
             })
@@ -138,7 +138,7 @@ jQuery(function initializeRepoAdminInterface() {
         jQuery.post(checkImportSettings)
             .done(function (response) {
                 const data = response.data;
-                window.magicMatcherUtil.showAjaxMessages(response);
+                window.issuelinksUtil.showAjaxMessages(response);
 
                 let total = '?';
                 let percent = '?';
@@ -188,7 +188,7 @@ jQuery(function initializeRepoAdminInterface() {
 
         jQuery.post(settings)
             .done(function (response) {
-                window.magicMatcherUtil.showAjaxMessages(response);
+                window.issuelinksUtil.showAjaxMessages(response);
                 const $importStatusElement = jQuery('<span class="js-importRunning importRunning">Import started</span>');
                 $this.replaceWith($importStatusElement);
                 window.setTimeout(
