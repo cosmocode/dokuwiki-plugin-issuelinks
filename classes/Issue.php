@@ -11,9 +11,9 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
 
     /** @var Issue[] */
     private static $instances = [];
-    protected $issueId = null;
-    protected $projectId = null;
-    protected $isMergeRequest = null;
+    protected $issueId;
+    protected $projectId;
+    protected $isMergeRequest;
     protected $files = [];
     protected $serviceID = '';
     private $summary = '';
@@ -26,11 +26,11 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
     private $assignee = [];
     private $labelData = [];
     private $versions = [];
-    private $duedate = null;
-    private $updated = null;
+    private $duedate;
+    private $updated;
     private $parent;
     private $errors = [];
-    private $isValid = null;
+    private $isValid;
 
     /**
      * @param        $serviceName
@@ -344,7 +344,7 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
     }
 
     /**
-     * @return null
+     * @return string
      */
     public function getDuedate()
     {
@@ -352,7 +352,9 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
     }
 
     /**
-     * @param null $duedate
+     * Set the issues duedate
+     *
+     * @param string $duedate
      *
      * @return Issue
      */
@@ -390,7 +392,7 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
     }
 
     /**
-     * @return null
+     * @return int
      */
     public function getUpdated()
     {
