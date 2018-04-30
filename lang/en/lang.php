@@ -55,8 +55,7 @@ $lang['success:issue imported'] = 'Issue imported:';
 $lang['error:issue import'] = 'There was an error importing Issue ';
 $lang['error:system too many requests'] = 'This system has made too many requests to GitHub. Please try again/continue after %s. Please note that this time may be either UTC or server-time or your local time depending on your setup.';
 
-$lang['menu'] = 'MagicMatcher: Import issues and commits';
-$lang['menu:repo-admin'] = 'Issuelinks: Administrate source repositories';
+$lang['menu:repo-admin'] = 'Issuelinks: setup project management services';
 
 $lang['message:needs configuration'] = 'Please configure %s!';
 $lang['message:github needs authorization'] = 'Please authorize SprintDoc on GitHub!';

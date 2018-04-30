@@ -18,7 +18,6 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
 {
 
     private $orgs = [];
-    private $authNeeded = [];
     private $configNeeded = [];
 
     /**
@@ -39,7 +38,13 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
      */
     public function getMenuText($language)
     {
-        return $this->getLang('menu:repo-admin') . 'repo-admin';
+        return $this->getLang('menu:repo-admin');
+    }
+
+    public function getMenuIcon()
+    {
+        $plugin = $this->getPluginName();
+        return DOKU_PLUGIN . $plugin . '/images/issue-opened.svg';
     }
 
     /**
