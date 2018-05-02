@@ -30,9 +30,9 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
      */
     public function register(Doku_Event_Handler $controller)
     {
-        $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'handle_ajax');
-        $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'repo_admin_toggle');
-        $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'repo_admin_org');
+        $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'handleAjax');
+        $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'repoAdminToggle');
+        $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'repoAdminOrg');
         $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'asyncImportAllIssues');
     }
 
@@ -45,7 +45,7 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
      *
      * @return void
      */
-    public function repo_admin_toggle(Doku_Event $event, $param)
+    public function repoAdminToggle(Doku_Event $event, $param)
     {
         if ($event->data !== 'issuelinks_repo_admin_toggle') {
             return;
@@ -90,7 +90,7 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
      *
      * @return void
      */
-    public function repo_admin_org(Doku_Event $event, $param)
+    public function repoAdminOrg(Doku_Event $event, $param)
     {
         if ($event->data !== 'issuelinks_repo_admin_getorg') {
             return;
@@ -216,7 +216,7 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
      *
      * @return void
      */
-    public function handle_ajax(Doku_Event $event, $param)
+    public function handleAjax(Doku_Event $event, $param)
     {
         if ($event->data !== 'plugin_issuelinks') {
             return;
