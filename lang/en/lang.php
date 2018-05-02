@@ -1,6 +1,6 @@
 <?php
 /**
- * English language file for magicmatcher plugin
+ * English language file for issuelinks plugin
  *
  * @author Andreas Gohr <dokuwiki@cosmocode.de>
  */

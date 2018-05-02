@@ -46,7 +46,7 @@ class syntax_plugin_issuelinks extends DokuWiki_Syntax_Plugin
     }
 
     /**
-     * Handle matches of the magicmatcher syntax
+     * Handle matches of the issuelinks syntax
      *
      * @param string       $match   The match of the syntax
      * @param int          $state   The state of the handler
