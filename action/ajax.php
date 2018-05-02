@@ -82,8 +82,6 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
             $response = $service->createWebhook($project);
         }
 
-        // jira: https://developer.atlassian.com/cloud/jira/platform/webhooks/#registering-a-webhook-via-the-jira-rest-api
-
         $this->util->sendResponse($response['status'], $response['data']);
     }
 
@@ -140,7 +138,7 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
 
         $repos = $service->getListOfAllReposAndHooks($org);
         $html = '<div class="org_repos">';
-        $html .= '<p>Below are the repositories of the organisation to which the authorized user has access to. Click on the icon to create/delete the webhook.</p>';
+        $html .= '<p>' . $this->getLang('text:repo admin') . '</p>';
         $html .= '<div><ul>';
         usort($repos, function ($repo1, $repo2) {
             return $repo1->displayName < $repo2->displayName ? -1 : 1;
@@ -155,11 +153,21 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
             }
             $repoDisplayName = $repo->displayName;
             $project = $repo->full_name;
-            $issueHookID = empty($repo->hookID) ? '' : "data-id='$repo->hookID'";
-            $issueHookTitle = $repo->error === 403 ? 'The associated account has insufficient rights for this action' : 'Toggle the hook for issue-events';
+            $hookTitle = $repo->error === 403 ? $this->getLang('title:forbidden') : $this->getLang('title:issue hook');
             $html .= "<li><div class='li'>";
-            $html .= "<span title='$issueHookTitle' data-project='$project' $issueHookID class='repohookstatus $stateIssue issue'></span>";
-            $html .= "<button title='Import all issues of this repository' data-project='$project' class='issueImport js-importIssues'>$importSVG</button>";
+            $spanAttributes = [
+                'title' => $hookTitle,
+                'data-project' => $project,
+                'data-id' => $repo->hookID,
+                'class' => "repohookstatus $stateIssue issue",
+            ];
+            $html .= '<span ' . buildAttributes($spanAttributes, true) . '></span>';
+            $buttonAttributes = [
+                'title' => 'Import all issues of this repository',
+                'data-project' => $project,
+                'class' => 'issueImport js-importIssues',
+            ];
+            $html .= '<button ' . buildAttributes($buttonAttributes, true) . ">$importSVG</button>";
             $html .= "<span class='mm_reponame'>$repoDisplayName</span>";
             $html .= '</div></li>';
         }

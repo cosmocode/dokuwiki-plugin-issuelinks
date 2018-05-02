@@ -435,11 +435,18 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
             $name .= ' ' . $this->getSummary();
         }
 
-        $target = 'target="_blank" rel="noopener"';
         $classes = 'issuelink ' . cleanID($this->getType()) . ($this->isMergeRequest ? ' mergerequest' : '');
-        $dataAttributes = "data-service=\"$this->serviceID\" data-project=\"$this->projectId\" data-issueid=\"$this->issueId\"";
-        $dataAttributes .= ' data-ismergerequest="' . ($this->isMergeRequest ? '1' : '0') . '"';
-        return "<a href=\"$url\" class=\"$classes\" $dataAttributes $target>" . $this->getTypeHTML() . "$name</a>";
+
+        $attributes = [
+            'class' => $classes,
+            'target' => '_blank',
+            'rel' => 'noopener',
+            'data-service' => $this->serviceID,
+            'data-project' => $this->projectId,
+            'data-issueid' => $this->issueId,
+            'data-ismergerequest' => $this->isMergeRequest ? '1' : '0'
+        ];
+        return "<a href=\"$url\" " . buildAttributes($attributes, true) . '>' . $this->getTypeHTML() . "$name</a>";
     }
 
     /**
@@ -499,7 +506,7 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
         ];
 
         if (!isset($typeIcon[cleanID($this->type)])) {
-            return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAABDUlEQVQYGQXBLWuVcQDA0fM8272OIYLCmi+IOBBWhWEZohiHn0AQi/H3CQxaLVptgmmIacUwWLthsDiQBaOmIaYF+XsOgHb61N9Glx30qAkAtOigVbttttZGO31t1VUArXfeCwCg3S66Buhzr6Blb/rVeS+b6WEnTehuZ0206Gej0Wh0CH3pCXrXM2ijVW+bW3bS6Bbd6xiddQNogpadNrpDa40mXbYBQI+7bPS9CRotdN51gOZGo9dN0Nxo1vv2AFpr1RFAtztBD1oBtOhffwD62D7osH2gZaN/QNv9aAZd6XdPgZYtoPtdtAWgzY771nbrNHezD523BQCa2uuo0Wh02vNmAADQ1KIZAPgPQZt8UVJ7VXIAAAAASUVORK5CYII=';
+            return DOKU_URL . '/lib/plugins/issuelinks/images/mdi-help-circle-outline.png';
         }
 
         return DOKU_URL . '/lib/plugins/issuelinks/images/' . $typeIcon[cleanID($this->type)];

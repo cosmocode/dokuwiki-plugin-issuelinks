@@ -89,7 +89,7 @@ class GitLab extends AbstractService
         try {
             $user = $this->makeSingleGitLabGetRequest('/user');
         } catch (\Exception $e) {
-            $this->configError = 'Attempt to verify the GitHub authentication failed with message: ' . hsc($e->getMessage());
+            $this->configError = 'The GitLab authentication failed with message: ' . hsc($e->getMessage());
             return false;
         }
         $this->user = $user;
@@ -118,7 +118,8 @@ class GitLab extends AbstractService
      * @param string $method   the http method to make, defaults to 'GET'
      * @param array  $headers  an array of additional headers to send along
      *
-     * @return array|int The response as array or the number of an occurred error if it is in @param $errorsToBeReturned or an empty array if the error is not in @param $errorsToBeReturned
+     * @return array|int The response as array or the number of an occurred error if it is in @param
+     *                   $errorsToBeReturned or an empty array if the error is not in @param $errorsToBeReturned
      *
      * @throws HTTPRequestException
      */
@@ -147,7 +148,12 @@ class GitLab extends AbstractService
             $link = "<a href=\"$url\">$url</a>";
         }
 
-        $configForm->addHTML("<p>{$this->configError} Please go to $link and generate a new token for this plugin with the <b>api</b> scope.</p>");
+        $message = '<p>';
+        $message .= $this->configError;
+        $message .= "Please go to $link and generate a new token for this plugin with the <b>api</b> scope.";
+        $message .= '</p>';
+
+        $configForm->addHTML($message);
         $configForm->addTextInput('gitlab_url', 'GitLab Url')->val($this->gitlabUrl);
         $configForm->addTextInput('gitlab_token', 'GitLab AccessToken')->useInput(false);
     }
@@ -205,7 +211,8 @@ class GitLab extends AbstractService
             $repo->full_name = $project['path_with_namespace'];
             $repo->displayName = $project['name'];
             try {
-                $repoHooks = $this->makeSingleGitLabGetRequest("/projects/$organisation%2F{$project['path']}/hooks?per_page=100");
+                $endpoint = "/projects/$organisation%2F{$project['path']}/hooks?per_page=100";
+                $repoHooks = $this->makeSingleGitLabGetRequest($endpoint);
             } catch (HTTPRequestException $e) {
                 $repo->error = (int)$e->getCode();
             }
@@ -493,7 +500,8 @@ class GitLab extends AbstractService
      *
      * @param $webhookBody
      *
-     * @return true|RequestResult true if the the webhook is our and should be processed RequestResult with explanation otherwise
+     * @return true|RequestResult true if the the webhook is our and should be processed RequestResult with explanation
+     *                            otherwise
      */
     public function validateWebhook($webhookBody)
     {

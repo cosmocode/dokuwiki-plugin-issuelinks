@@ -123,7 +123,8 @@ interface ServiceInterface
      *
      * @param $webhookBody
      *
-     * @return true|RequestResult true if the the webhook is our and should be processed RequestResult with explanation otherwise
+     * @return true|RequestResult true if the the webhook is our and should be processed RequestResult with explanation
+     *                            otherwise
      */
     public function validateWebhook($webhookBody);
 

@@ -135,7 +135,7 @@ class Jira extends AbstractService
             $this->makeJiraRequest('/rest/webhooks/1.0/webhook', [], 'GET');
 //            $user = $this->makeJiraRequest('/rest/api/2/user', [], 'GET');
         } catch (\Exception $e) {
-            $this->configError = 'Attempt to verify the Jira authentication failed with message: ' . hsc($e->getMessage());
+            $this->configError = 'The Jira authentication failed with message: ' . hsc($e->getMessage());
             return false;
         }
 
@@ -164,7 +164,8 @@ class Jira extends AbstractService
     {
         $url = 'https://id.atlassian.com/manage/api-tokens';
         $link = "<a href=\"$url\">$url</a>";
-        $configForm->addHTML("<p>{$this->configError} Please go to $link and generate a new token for this plugin.</p>");
+        $message = "Please go to $link and generate a new token for this plugin.";
+        $configForm->addHTML("<p>{$this->configError} $message</p>");
         $configForm->addTextInput('jira_url', 'Jira Url')->val($this->jiraUrl);
         $configForm->addTextInput('jira_user', 'Jira User')
             ->val($this->authUser)
@@ -439,7 +440,8 @@ class Jira extends AbstractService
      *
      * @param $webhookBody
      *
-     * @return true|RequestResult true if the the webhook is our and should be processed RequestResult with explanation otherwise
+     * @return true|RequestResult true if the the webhook is our and should be processed RequestResult with explanation
+     *                            otherwise
      */
     public function validateWebhook($webhookBody)
     {

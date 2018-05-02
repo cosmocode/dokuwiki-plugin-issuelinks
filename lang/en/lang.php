@@ -19,8 +19,6 @@ $lang['label:project for import'] = 'Project from which to import the issues';
 $lang['label:issue import offest'] = '(optional) Offset number of issues from the end';
 $lang['label:repository for import'] = 'Repository from which to import the commits';
 $lang['label:commit hash'] = 'Hash of the commit to import (0-9, a-f, at least eight digit)';
-$lang['label:RMService'] = 'Service managing the repository';
-$lang['label:PMService'] = 'Service managing the project';
 $lang['label github:choose organisation'] = 'Choose which organisation\'s repository-webhooks to manage';
 $lang['label gitlab:choose organisation'] = 'Choose which group\'s project-webhooks to manage';
 $lang['label:project dropdown'] = 'Select the project';
@@ -61,16 +59,13 @@ $lang['message:needs configuration'] = 'Please configure %s!';
 $lang['message:github needs authorization'] = 'Please authorize SprintDoc on GitHub!';
 $lang['message:gitlab needs authorization'] = 'The GitLab user-token has become invalid. Please enter a valid token.';
 
-$lang['text:repo admin github'] = 'Below are the repositories of the organisation to which the authorized user has access to. Click on the icon to create/delete the webhook.';
-$lang['text:repo admin gitlab'] = 'Below are the projects of the group to which the authorized user has access to. Click on the icon to create/delete the webhook.';
+$lang['text:repo admin'] = 'Below are the repositories of the organisation/group to which the authorized user has access to. Click on the icon to create/delete the webhook.';
 $lang['text github:no orgs'] = 'No organisation has allowed this application access.';
 $lang['text gitlab:no orgs'] = 'This user has no access to any organisations.';
-$lang['text:authorizedUser github'] = 'The currently authorized User is %s. Do you want to <a href="%s">authorize with a differnt user</a>?';
-$lang['text:authorizedUser gitlab'] = 'The currently authorized User is %s. To change the authorized User, please enter a new access token in the <a href="%s">configuration</a>.';
 $lang['text:no issues match search'] = 'No issues match that search';
+$lang['text gitlab: generate api key'] = 'Please go to %s and generate a new token for this plugin with the <b>api</b> scope.';
 
 $lang['title:issue hook'] = 'Toggle the hook for issue-events';
-$lang['title:push hook'] = 'Toggle the hook for push-events';
 $lang['title:forbidden'] = 'The associated account has insufficient rights for this action';
 
 $lang['suggestions'] = 'Page Suggestions';

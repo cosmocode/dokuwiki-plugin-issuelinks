@@ -96,7 +96,7 @@ class GitHub extends AbstractService
             $user = $this->makeGitHubGETRequest('/user');
 //            $status = $this->connector->getLastStatus();
         } catch (\Exception $e) {
-            $this->configError = 'Attempt to verify the GitHub authentication failed with message: ' . hsc($e->getMessage());
+            $this->configError = 'The GitHub authentication failed with message: ' . hsc($e->getMessage());
             return false;
         }
         $this->user = $user;
@@ -197,7 +197,12 @@ class GitHub extends AbstractService
     public function hydrateConfigForm(Form $configForm)
     {
         $scopes = implode(', ', $this->scopes);
-        $configForm->addHTML('<p>' . $this->configError . ' Please go to <a href="https://github.com/settings/tokens">https://github.com/settings/tokens/</a> and generate a new token for this plugin with the scopes ' . $scopes . '</p>');
+        $link = '<a href="https://github.com/settings/tokens">https://github.com/settings/tokens/</a>';
+        $message = '<p>';
+        $message .= $this->configError;
+        $message .= " Please go to $link and generate a new token for this plugin with the scopes $scopes.";
+        $message .= '</p>';
+        $configForm->addHTML($message);
         $configForm->addTextInput('githubToken', 'GitHub AccessToken')->useInput(false);
     }
 
@@ -310,7 +315,8 @@ class GitHub extends AbstractService
      *
      *
      * Known issue:
-     *   * We have to cycle through the webhooks/secrets stored for a given repo because the hookid is not in the request
+     *   * We have to cycle through the webhooks/secrets stored for a given repo because the hookid is not in the
+     *   request
      *
      * @param string $body    The unaltered payload of the request
      * @param string $repo_id the repo id (in the format of "organisation/repo-name")
