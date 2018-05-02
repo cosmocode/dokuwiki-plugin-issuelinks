@@ -2,7 +2,6 @@
 
 namespace dokuwiki\plugin\issuelinks\classes;
 
-
 class RequestResult
 {
     public $code;

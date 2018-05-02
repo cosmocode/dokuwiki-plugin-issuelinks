@@ -624,8 +624,12 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
 
         if (!$this->isMergeRequest) {
             // show merge requests referencing this Issues
-            $mrs = $data->getMergeRequestsForIssue($this->getServiceName(), $this->getProject(), $this->issueId,
-                $this->isMergeRequest);
+            $mrs = $data->getMergeRequestsForIssue(
+                $this->getServiceName(),
+                $this->getProject(),
+                $this->issueId,
+                $this->isMergeRequest
+            );
             if (!empty($mrs)) {
                 $html .= '<div class="mergeRequests">';
                 $html .= '<h2>Merge Requests</h2>';
@@ -641,8 +645,12 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
             }
         }
 
-        $linkingPages = $data->getLinkingPages($this->getServiceName(), $this->getProject(), $this->issueId,
-            $this->isMergeRequest);
+        $linkingPages = $data->getLinkingPages(
+            $this->getServiceName(),
+            $this->getProject(),
+            $this->issueId,
+            $this->isMergeRequest
+        );
         if (count($linkingPages)) {
             $html .= '<div class="relatedPages📄">';
             $html .= '<h2>' . $util->getLang('linking pages') . '</h2>';

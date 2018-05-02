@@ -201,7 +201,6 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
         /** @var helper_plugin_issuelinks_data $data */
         $data = plugin_load('helper', 'issuelinks_data');
         $data->importAllIssues($serviceName, $projectKey);
-
     }
 
     /**
@@ -242,8 +241,12 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
                 list($code, $data) = $this->getIssueTooltipHTML($serviceName, $projectKey, $issueId, $isMergeRequest);
                 break;
             case 'getAdditionalIssueData':
-                list($code, $data) = $this->getAdditionalIssueData($serviceName, $projectKey, $issueId,
-                    $isMergeRequest);
+                list($code, $data) = $this->getAdditionalIssueData(
+                    $serviceName,
+                    $projectKey,
+                    $issueId,
+                    $isMergeRequest
+                );
                 break;
             default:
                 $code = 400;
@@ -309,5 +312,4 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
 
         return [200, $issue->getAdditionalDataHTML()];
     }
-
 }

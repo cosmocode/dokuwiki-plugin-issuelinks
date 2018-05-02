@@ -151,7 +151,7 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
             global $INPUT;
             $reconfigureURL = $INPUT->server->str('REQUEST_URI') . '&reconfigureService=' . $serviceID;
             $reconfigureLink = "<a href=\"$reconfigureURL\">{$this->getLang('label: reconfigure service')}</a>";
-            $authorizedUserLabel = sprintf($this->getLang('label: authorized with user'),$service->getUserString());
+            $authorizedUserLabel = sprintf($this->getLang('label: authorized with user'), $service->getUserString());
             $form = new \dokuwiki\Form\Form(['data-service' => $serviceID]);
             $form->addFieldsetOpen($this->getLang('legend:user'));
             $form->addTagOpen('p');
@@ -159,8 +159,11 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
             $form->addTagClose('p');
             $form->addFieldsetClose();
             $form->addFieldsetOpen($this->getLang("legend:group $serviceID"));
-            $form->addDropdown('mm_organisation', array_merge([''], $this->orgs[$serviceID]),
-                $this->getLang("label $serviceID:choose organisation"));
+            $form->addDropdown(
+                'mm_organisation',
+                array_merge([''], $this->orgs[$serviceID]),
+                $this->getLang("label $serviceID:choose organisation")
+            );
             $form->addFieldsetClose();
             $html .= $form->toHTML();
             $html .= "<div data-service='$serviceID' class='repo_area'></div>";
@@ -168,7 +171,6 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
         $html .= '</div>'; // <div data-service='$servicename' class='service_area'>
         return $html;
     }
-
 }
 
 // vim:ts=4:sw=4:et:

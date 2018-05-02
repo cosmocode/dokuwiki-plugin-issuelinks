@@ -15,7 +15,6 @@ if (!defined('DOKU_INC')) {
 use dokuwiki\plugin\issuelinks\classes\Issue;
 use dokuwiki\plugin\issuelinks\services\ServiceInterface;
 
-
 class syntax_plugin_issuelinks extends DokuWiki_Syntax_Plugin
 {
 
@@ -50,7 +49,6 @@ class syntax_plugin_issuelinks extends DokuWiki_Syntax_Plugin
         foreach ($this->syntaxPatterns as $pattern => $class) {
             $this->Lexer->addSpecialPattern("\[\[$pattern>.*?\]\]", $mode, 'plugin_issuelinks');
         }
-
     }
 
     /**
@@ -81,8 +79,12 @@ class syntax_plugin_issuelinks extends DokuWiki_Syntax_Plugin
         global $ID, $REV, $ACT;
         $isLatest = empty($REV);
         if (act_clean($ACT) === 'show' && $isLatest && page_exists($ID)) {
-            $this->saveLinkToDatabase($issue->getServiceName(), $issue->getProject(), $issue->getKey(),
-                $issue->isMergeRequest());
+            $this->saveLinkToDatabase(
+                $issue->getServiceName(),
+                $issue->getProject(),
+                $issue->getKey(),
+                $issue->isMergeRequest()
+            );
         }
 
         return [
@@ -132,7 +134,6 @@ class syntax_plugin_issuelinks extends DokuWiki_Syntax_Plugin
         $renderer->doc .= $issue->getIssueLinkHTML();
         return true;
     }
-
 }
 
 // vim:ts=4:sw=4:et:

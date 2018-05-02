@@ -3,7 +3,6 @@
 namespace dokuwiki\plugin\issuelinks\services;
 
 use dokuwiki\Form\Form;
-use dokuwiki\plugin\issuelinks\classes\ExternalServerException;
 use dokuwiki\plugin\issuelinks\classes\HTTPRequestException;
 use dokuwiki\plugin\issuelinks\classes\Issue;
 use dokuwiki\plugin\issuelinks\classes\Repository;
@@ -190,7 +189,6 @@ class GitLab extends AbstractService
         return array_map(function ($group) {
             return $group['full_path'];
         }, $groups);
-
     }
 
     /**
@@ -522,7 +520,6 @@ class GitLab extends AbstractService
         }
 
         return true;
-
     }
 
     /**

@@ -8,10 +8,7 @@
 
 namespace dokuwiki\plugin\issuelinks\services;
 
-
 use dokuwiki\Form\Form;
-use dokuwiki\plugin\issuelinks\classes\ExternalServerException;
-use dokuwiki\plugin\issuelinks\classes\HTTPRequestException;
 use dokuwiki\plugin\issuelinks\classes\Issue;
 use dokuwiki\plugin\issuelinks\classes\Repository;
 use dokuwiki\plugin\issuelinks\classes\RequestResult;
@@ -194,7 +191,6 @@ class Jira extends AbstractService
         if (!empty($user)) {
             $db->saveKeyValuePair('jira_user', $user);
         }
-
     }
 
     public function getUserString()
@@ -380,7 +376,6 @@ class Jira extends AbstractService
         // store new webhook to database
         $db->saveWebhook('jira', $projectsString, $newWebhookID, 'jira rest webhooks have no secrets :/');
         return ['status' => 200, 'data' => ['id' => $newWebhookID]];
-
     }
 
     /**
@@ -489,5 +484,4 @@ class Jira extends AbstractService
 
         return new RequestResult(200, 'OK');
     }
-
 }

@@ -45,21 +45,25 @@ class helper_plugin_issuelinks_util extends DokuWiki_Plugin
         if (empty($revision)) {
             $currentRevision = filemtime(wikiFN($page_id));
             $url = wl(
-                $page_id, [
-                "rev" => $currentRevision,
-                "do" => "diff",
-            ], true
+                $page_id,
+                [
+                    "rev" => $currentRevision,
+                    "do" => "diff",
+                ],
+                true
             );
         } else {
             $changelog = new PageChangelog($page_id);
             $previousRevision = $changelog->getRelativeRevision($revision, -1);
             $url = wl(
-                $page_id, [
-                "do" => "diff",
-                "rev2[0]" => $revision,
-                "rev2[1]" => $previousRevision,
-                "difftype" => "sidebyside",
-            ], true
+                $page_id,
+                [
+                    "do" => "diff",
+                    "rev2[0]" => $revision,
+                    "rev2[1]" => $previousRevision,
+                    "difftype" => "sidebyside",
+                ],
+                true
             );
         }
         return $url;
@@ -109,5 +113,4 @@ class helper_plugin_issuelinks_util extends DokuWiki_Plugin
     {
         return ((string)(int)$timestamp === (string)$timestamp);
     }
-
 }

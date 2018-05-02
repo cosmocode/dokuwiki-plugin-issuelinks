@@ -67,4 +67,3 @@ if (!defined('DOKU_TESTING')) {
     $hook = new webhook_plugin_issuelinks();
     $hook->run();
 }
-

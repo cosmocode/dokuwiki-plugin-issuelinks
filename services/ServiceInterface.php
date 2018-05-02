@@ -135,5 +135,4 @@ interface ServiceInterface
      * @return RequestResult
      */
     public function handleWebhook($webhookBody);
-
 }

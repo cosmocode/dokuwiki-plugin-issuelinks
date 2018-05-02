@@ -79,12 +79,12 @@ class helper_plugin_issuelinks_data extends DokuWiki_Plugin
                     'count' => $counter,
                     'status' => 'running',
                 ]));
-
-
             }
         } catch (\Throwable $e) {
-            dbglog("Downloading all issues from $serviceName fpr project $projectKey failed ",
-                __FILE__ . ': ' . __LINE__);
+            dbglog(
+                "Downloading all issues from $serviceName fpr project $projectKey failed ",
+                __FILE__ . ': ' . __LINE__
+            );
             if (is_a($e, \dokuwiki\plugin\issuelinks\classes\HTTPRequestException::class)) {
                 /** @var \dokuwiki\plugin\issuelinks\classes\HTTPRequestException $e */
                 dbglog($e->getUrl());
@@ -236,8 +236,12 @@ class helper_plugin_issuelinks_data extends DokuWiki_Plugin
         $db = plugin_load('helper', 'issuelinks_db');
         $issues = $db->getMergeRequestsReferencingIssue($serviceName, $projectKey, $issueId, $isMergeRequest);
         foreach ($issues as &$issueData) {
-            $issue = Issue::getInstance($issueData['service'], $issueData['project_id'], $issueData['issue_id'],
-                $issueData['is_mergerequest']);
+            $issue = Issue::getInstance(
+                $issueData['service'],
+                $issueData['project_id'],
+                $issueData['issue_id'],
+                $issueData['is_mergerequest']
+            );
             $issue->getFromDB();
             $issueData['summary'] = $issue->getSummary();
             $issueData['status'] = $issue->getStatus();

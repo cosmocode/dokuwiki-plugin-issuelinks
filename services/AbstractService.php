@@ -53,5 +53,4 @@ abstract class AbstractService implements ServiceInterface
         }
         return json_decode($dokuHTTPClient->resp_body, true);
     }
-
 }

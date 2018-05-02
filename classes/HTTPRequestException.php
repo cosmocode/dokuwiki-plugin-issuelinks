@@ -58,6 +58,4 @@ class HTTPRequestException extends IssueLinksException
     {
         return $this->method;
     }
-
-
 }

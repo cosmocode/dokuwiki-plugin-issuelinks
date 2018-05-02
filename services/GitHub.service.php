@@ -145,8 +145,10 @@ class GitHub extends AbstractService
 
 
             if ($this->dokuHTTPClient->resp_headers['x-ratelimit-remaining'] < 500) {
-                msg(sprintf($utils->getLang('error:system too many requests'),
-                    dformat($this->dokuHTTPClient->resp_headers['x-ratelimit-reset'])), -1);
+                msg(sprintf(
+                    $utils->getLang('error:system too many requests'),
+                    dformat($this->dokuHTTPClient->resp_headers['x-ratelimit-reset'])
+                ), -1);
                 break;
             }
 
@@ -535,8 +537,12 @@ class GitHub extends AbstractService
         $retrievedIssues = [];
         foreach ($issues as $issueData) {
             try {
-                $issue = Issue::getInstance('github', $projectKey, $issueData['number'],
-                    !empty($issueData['pull_request']));
+                $issue = Issue::getInstance(
+                    'github',
+                    $projectKey,
+                    $issueData['number'],
+                    !empty($issueData['pull_request'])
+                );
             } catch (\InvalidArgumentException $e) {
                 continue;
             }
@@ -607,8 +613,8 @@ class GitHub extends AbstractService
             return false;
         }
 
-        if (count($hook['events']) !== 3 || array_diff($hook['events'],
-                ['issues', 'issue_comment', 'pull_request'])) {
+        $missingEvents = array_diff($hook['events'], ['issues', 'issue_comment', 'pull_request']);
+        if (count($hook['events']) !== 3 || $missingEvents) {
             return false;
         }
 

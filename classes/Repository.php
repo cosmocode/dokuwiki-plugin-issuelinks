@@ -8,7 +8,6 @@
 
 namespace dokuwiki\plugin\issuelinks\classes;
 
-
 class Repository
 {
     public $full_name;

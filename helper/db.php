@@ -468,5 +468,4 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
             'type' => $type,
         ]);
     }
-
 }

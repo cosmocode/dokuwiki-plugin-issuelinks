@@ -41,7 +41,6 @@ class ServiceProvider
     {
         $keys = [];
         foreach ($this->serviceClasses as $className) {
-
             $syntax = $className::SYNTAX;
 
             $keys[$syntax] = $className;
@@ -57,7 +56,6 @@ class ServiceProvider
     {
         $userAgents = [];
         foreach ($this->serviceClasses as $className) {
-
             $ua = $className::WEBHOOK_UA;
 
             $userAgents[$ua] = $className;
