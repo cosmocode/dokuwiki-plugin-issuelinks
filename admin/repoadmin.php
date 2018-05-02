@@ -10,10 +10,6 @@
 use dokuwiki\plugin\issuelinks\classes\ServiceProvider;
 use dokuwiki\plugin\issuelinks\services\ServiceInterface;
 
-if (!defined('DOKU_INC')) {
-    die();
-}
-
 class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
 {
 

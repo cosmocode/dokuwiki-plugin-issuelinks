@@ -9,10 +9,6 @@
 // must be run within Dokuwiki
 use dokuwiki\plugin\issuelinks\classes\Issue;
 
-if (!defined('DOKU_INC')) {
-    die();
-}
-
 class helper_plugin_issuelinks_db extends DokuWiki_Plugin
 {
     private $db = null;

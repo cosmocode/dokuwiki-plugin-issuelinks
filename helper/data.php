@@ -9,11 +9,6 @@
 use dokuwiki\plugin\issuelinks\classes\Issue;
 use dokuwiki\plugin\issuelinks\classes\ServiceProvider;
 
-// must be run within Dokuwiki
-if (!defined('DOKU_INC')) {
-    die();
-}
-
 class helper_plugin_issuelinks_data extends DokuWiki_Plugin
 {
 

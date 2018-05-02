@@ -6,11 +6,6 @@
  * @author  Andreas Gohr <dokuwiki@cosmocode.de>
  */
 
-// must be run within Dokuwiki
-if (!defined('DOKU_INC')) {
-    die();
-}
-
 class helper_plugin_issuelinks_util extends DokuWiki_Plugin
 {
 

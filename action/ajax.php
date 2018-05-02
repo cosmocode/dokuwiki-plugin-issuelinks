@@ -6,10 +6,6 @@
  * @author  Michael Große <dokuwiki@cosmocode.de>
  */
 
-if (!defined('DOKU_INC')) {
-    die();
-}
-
 use dokuwiki\plugin\issuelinks\classes\Issue;
 use dokuwiki\plugin\issuelinks\classes\ServiceProvider;
 
