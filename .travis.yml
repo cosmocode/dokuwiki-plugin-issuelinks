@@ -18,4 +18,4 @@ script:
   - cd _test
   - phpunit --configuration=../lib/plugins/issuelinks/phpunit.xml --group plugin_issuelinks --coverage-clover=coverage.clover
   - wget https://scrutinizer-ci.com/ocular.phar
-  - php ocular.phar code-coverage:upload --format=php-clover coverage.clover --repository=g/$TRAVIS_REPO_SLUG
+  - php ocular.phar code-coverage:upload --format=php-clover coverage.clover --repository=g/$TRAVIS_REPO_SLUG --revision=$TRAVIS_COMMIT
