@@ -68,6 +68,22 @@ class helper_plugin_issuelinks_db extends DokuWiki_Plugin
     }
 
     /**
+     * Removes ALL entries from the database
+     *
+     * Useful when resetting the project configuration
+     */
+    public function reset()
+    {
+        $db = $this->getDB();
+        if (!$db) return;
+
+        $db->query('DELETE FROM issues');
+        $db->query('DELETE FROM issue_issues');
+        $db->query('DELETE FROM pagerev_issues');
+        $db->query('VACUUM');
+    }
+
+    /**
      * Get a value to a stored key from the database
      *
      * @param $key
