@@ -26,7 +26,7 @@ class linksyntax_plugin_issuelinks_test extends DokuWikiTest {
         // arrange
         global $ID;
         $ID = 'testpage';
-        saveWikiText('testpage','{{jira>SPR-281}} {{jira>TW-7}}','test summary');
+        saveWikiText('testpage','[[jira>SPR-281]] [[jira>TW-7]]','test summary');
 
         // act
         p_get_instructions('[[jira>SPR-281]]');
@@ -118,7 +118,13 @@ class linksyntax_plugin_issuelinks_test extends DokuWikiTest {
             ),
             array(
                 'page' => 'testpage2',
-                'project_id' => 'grosse/my-merge-request',
+                'project_id' => 'grosse/project-with-merge-request',
+                'issue_id' => '1',
+                'type' => 'link',
+            ),
+            array(
+                'page' => 'testpage2',
+                'project_id' => 'grosse/project-with-issue',
                 'issue_id' => '1',
                 'type' => 'link',
             )), $pagerev_issues);
