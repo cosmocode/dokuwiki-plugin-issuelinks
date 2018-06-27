@@ -4,4 +4,4 @@ email  grosse@cosmocode.de
 date   2018-05-09
 name   Issue Link
 desc   Show links with popups for issues of project management services
-url    https://www.dokuwiki.org/plugin:issuelink
+url    https://www.dokuwiki.org/plugin:issuelinks
