@@ -1,7 +1,7 @@
 base   issuelinks
 author Michael Große
-email  grosse@cosmocode.de
-date   2018-05-09
-name   Issue Link
+email  dokuwiki@cosmocode.de
+date   2018-06-27
+name   Issue Links
 desc   Show links with popups for issues of project management services
 url    https://www.dokuwiki.org/plugin:issuelinks
