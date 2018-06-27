@@ -135,6 +135,10 @@ class action_plugin_issuelinks_ajax extends DokuWiki_Action_Plugin
         $repos = $service->getListOfAllReposAndHooks($org);
         $html = '<div class="org_repos">';
         $html .= '<p>' . $this->getLang('text:repo admin') . '</p>';
+        $orgAdvice = $service->getRepoPageText();
+        if ($orgAdvice) {
+            $html .= '<p>' . $orgAdvice . '</p>';
+        }
         $html .= '<div><ul>';
         usort($repos, function ($repo1, $repo2) {
             return $repo1->displayName < $repo2->displayName ? -1 : 1;

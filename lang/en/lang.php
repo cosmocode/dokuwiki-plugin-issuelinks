@@ -119,4 +119,6 @@ $lang['js']['status:started'] = 'Started...';
 $lang['js']['status:running'] = 'Running...';
 $lang['js']['status:done'] = 'Done!';
 
+$lang['jira:webhook settings link'] = 'All webhooks currently active in your Jira can be found at Jira\'s advanced system settings page in the webhooks subsection.';
+
 //Setup VIM: ex: et ts=4 :

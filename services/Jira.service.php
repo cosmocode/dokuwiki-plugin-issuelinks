@@ -199,6 +199,17 @@ class Jira extends AbstractService
         return hsc($this->authUser);
     }
 
+    public function getRepoPageText()
+    {
+        /** @var \helper_plugin_issuelinks_db $db */
+        $db = plugin_load('helper', 'issuelinks_db');
+        $jira_url = $db->getKeyValue('jira_url');
+        $href = $jira_url . '/plugins/servlet/webhooks';
+        $msg = $db->getLang('jira:webhook settings link');
+        $link = "<a href=\"$href\" target='_blank'>$msg</a>";
+        return $link;
+    }
+
     public function retrieveIssue(Issue $issue)
     {
         // FIXME: somehow validate that we are allowed to retrieve that issue
@@ -335,7 +346,6 @@ class Jira extends AbstractService
 
     public function createWebhook($project)
     {
-
         // get old webhook id
         /** @var \helper_plugin_issuelinks_db $db */
         $db = plugin_load('helper', 'issuelinks_db');
@@ -369,10 +379,11 @@ class Jira extends AbstractService
             'jqlFilter' => "project in ($projectsString)",
             'excludeIssueDetails' => 'false',
         ];
+
         $response = $this->makeJiraRequest('/rest/webhooks/1.0/webhook', $payload, 'POST');
+
         $selfLink = $response['self'];
         $newWebhookID = substr($selfLink, strrpos($selfLink, '/') + 1);
-
 
         // store new webhook to database
         $db->saveWebhook('jira', $projectsString, $newWebhookID, 'jira rest webhooks have no secrets :/');

@@ -72,6 +72,13 @@ interface ServiceInterface
 
     public function getUserString();
 
+    /**
+     * Optional, return HTML to be displayed on the repo page for a project
+     *
+     * @return string
+     */
+    public function getRepoPageText();
+
     public function retrieveIssue(Issue $issue);
 
     public function retrieveAllIssues($projectKey, &$startat = 0);
