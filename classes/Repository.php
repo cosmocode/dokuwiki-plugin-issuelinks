@@ -11,7 +11,7 @@ namespace dokuwiki\plugin\issuelinks\classes;
 class Repository
 {
     public $full_name;
-    public $hookID;
+    public $hookID = '';
     public $displayName;
     public $error;
 }
