@@ -13,6 +13,7 @@ $lang['btn:Save without Issue'] = 'Save without Issue';
 $lang['btn:Save with Issue'] = 'Save with Issue';
 $lang['btn:Import'] = 'Import';
 $lang['btn:Abort'] = 'Abort';
+$lang['btn:Submit'] = 'Submit';
 
 $lang['label:issuenumber'] = 'Number of the issue to import, e.g. "27". Import all, if empty';
 $lang['label:project for import'] = 'Project from which to import the issues';

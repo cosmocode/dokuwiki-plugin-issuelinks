@@ -138,7 +138,7 @@ class admin_plugin_issuelinks_repoadmin extends DokuWiki_Admin_Plugin
             $configForm->setHiddenField('authorize', $serviceID);
             $configForm->addFieldsetOpen();
             $service->hydrateConfigForm($configForm);
-            $configForm->addButton('', 'Submit FIXME')->attr('type', 'submit');
+            $configForm->addButton('', $this->getLang('btn:Submit'))->attr('type', 'submit');
             $configForm->addFieldsetClose();
             $html .= $configForm->toHTML();
         } elseif (count($this->orgs[$serviceID]) === 0) {
