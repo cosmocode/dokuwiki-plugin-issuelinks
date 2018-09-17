@@ -61,8 +61,9 @@ class syntax_plugin_issuelinks extends DokuWiki_Syntax_Plugin
     {
         list($pmServiceKey, $issueSyntax) = explode('>', trim($match, '[]'));
 
+        $serviceClassName = $this->syntaxPatterns[$pmServiceKey];
         /** @var ServiceInterface $serviceClass */
-        $serviceClass = $this->syntaxPatterns[$pmServiceKey]::getInstance();
+        $serviceClass = $serviceClassName::getInstance();
 
         $issue = $serviceClass->parseIssueSyntax($issueSyntax);
 

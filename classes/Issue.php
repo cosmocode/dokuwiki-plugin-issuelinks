@@ -455,7 +455,8 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
     public function getIssueURL()
     {
         $serviceProvider = ServiceProvider::getInstance();
-        $service = $serviceProvider->getServices()[$this->serviceID]::getInstance();
+        $serviceClassName = $serviceProvider->getServices()[$this->serviceID];
+        $service = $serviceClassName::getInstance();
         return $service->getIssueURL($this->projectId, $this->issueId, $this->isMergeRequest);
     }
 
@@ -545,7 +546,8 @@ class Issue extends \DokuWiki_Plugin implements \JsonSerializable
     public function getFromService()
     {
         $serviceProvider = ServiceProvider::getInstance();
-        $service = $serviceProvider->getServices()[$this->serviceID]::getInstance();
+        $serviceClassName = $serviceProvider->getServices()[$this->serviceID];
+        $service = $serviceClassName::getInstance();
 
         try {
             $service->retrieveIssue($this);
