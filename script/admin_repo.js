@@ -162,7 +162,7 @@ jQuery(function initializeRepoAdminInterface() {
                     CHECK_IMPORT_STATUS_TIMEOUT,
                     servicename,
                     project,
-                    $importStatusElement,
+                    $importStatusElement
                 );
             })
             .fail(function (jqXHR) {
@@ -196,7 +196,7 @@ jQuery(function initializeRepoAdminInterface() {
                     CHECK_IMPORT_STATUS_TIMEOUT,
                     servicename,
                     project,
-                    $importStatusElement,
+                    $importStatusElement
                 );
             });
     });
