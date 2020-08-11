@@ -75,7 +75,7 @@ class Jira extends AbstractService
     {
         global $INPUT;
         $userAgent = $INPUT->server->str('HTTP_USER_AGENT');
-        return strpos($userAgent, 'Atlassian HttpClient') === 0;
+        return strpos($userAgent, 'Atlassian') === 0;
     }
 
     /**
